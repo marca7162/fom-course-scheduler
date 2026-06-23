@@ -1,10 +1,12 @@
-import re
 from pathlib import Path
+
 import pandas as pd
+
 
 ROOT = Path(__file__).resolve().parent
 
 INPUT_FILE = ROOT / "clean_availability.csv"
+COUNTS_FILE = ROOT / "clean_counts.csv"
 OUTPUT_FILE = ROOT / "tokenized_availability.csv"
 
 
@@ -14,9 +16,36 @@ def normalize_text(text):
     return str(text).strip().lower()
 
 
-def get_course_id(course_code):
-    match = re.search(r"(\d+)", str(course_code))
-    return int(match.group(1)) if match else None
+def get_course_id(course_text):
+    parts = str(course_text).strip().split()
+
+    if len(parts) >= 2:
+        return f"{parts[0]} {parts[1]}"
+
+    return str(course_text).strip()
+
+
+def load_credit_lookup():
+    counts = pd.read_csv(COUNTS_FILE)
+
+    counts["course_id"] = counts["Full Course List"].apply(get_course_id)
+    counts["Credits"] = pd.to_numeric(counts["Credits"], errors="coerce")
+
+    return dict(zip(counts["course_id"], counts["Credits"]))
+
+
+def add_period_8_if_five_credits(period_options, course_id, credit_lookup):
+    credits = credit_lookup.get(course_id)
+
+    if credits == 5:
+        options = period_options.split(",") if period_options else []
+
+        if "8" not in options:
+            options.append("8")
+
+        return ",".join(options)
+
+    return period_options
 
 
 def get_day_group(text):
@@ -24,20 +53,27 @@ def get_day_group(text):
 
     if "m/w" in text or "mw" in text:
         return "MW"
+
     if "t/th" in text or "tth" in text:
         return "TTH"
+
     if "tuesday" in text or "tuesdays" in text:
         return "T"
+
     if "thursday" in text or "thursdays" in text:
         return "TH"
+
     if "any time" in text or "anytime" in text:
         return "ALL"
 
     return "UNKNOWN"
 
 
-def get_period_options(text):
+def get_base_period_options(text):
     text = normalize_text(text)
+
+    if "any time" in text or "anytime" in text:
+        return "1,2,3,4,5,6,7"
 
     if "first or second" in text or "1st or second" in text:
         return "1,2"
@@ -63,11 +99,11 @@ def get_period_options(text):
     if "16:00-17:20" in text:
         return "7"
 
-    if "after 12:00" in text or "after 12" in text:
-        return "3,4,5,6,7"
-
     if "after 12:30" in text:
         return "4,5,6,7"
+
+    if "after 12:00" in text or "after 12" in text:
+        return "3,4,5,6,7"
 
     if "after 15:00" in text:
         return "6,7"
@@ -75,10 +111,13 @@ def get_period_options(text):
     if "after 16:00" in text:
         return "7"
 
-    if "any time" in text or "anytime" in text:
-        return "8"
-
     return ""
+
+
+def get_period_options(text, course_id, credit_lookup):
+    base_options = get_base_period_options(text)
+
+    return add_period_8_if_five_credits(base_options, course_id, credit_lookup)
 
 
 def get_preference(text):
@@ -100,11 +139,13 @@ def get_preference(text):
 
 
 def tokenize_availability():
+    credit_lookup = load_credit_lookup()
+
     df = pd.read_csv(INPUT_FILE)
 
     df = df.rename(
         columns={
-            "Course Code": "course_code",
+            "Course Code": "course_id",
             "Course Name ": "course_name",
             "Instructor ": "teacher_name",
             "Availability 1": "availability_1",
@@ -115,20 +156,26 @@ def tokenize_availability():
     rows = []
 
     for _, row in df.iterrows():
+        course_id = get_course_id(row["course_id"])
+        teacher_name = row["teacher_name"]
+
         avail1 = row.get("availability_1")
         avail2 = row.get("availability_2")
 
         no_avail1 = pd.isna(avail1) or str(avail1).strip() == ""
         no_avail2 = pd.isna(avail2) or str(avail2).strip() == ""
 
-        # If no availability is listed, assume the course can be placed anywhere.
         if no_avail1 and no_avail2:
+            period_options = add_period_8_if_five_credits(
+                "1,2,3,4,5,6,7", course_id, credit_lookup
+            )
+
             rows.append(
                 {
-                    "course_id": get_course_id(row["course_code"]),
-                    "teacher_name": row["teacher_name"],
+                    "course_id": course_id,
+                    "teacher_name": teacher_name,
                     "day_group": "ALL",
-                    "period_options": "1,2,3,4,5,6,7",
+                    "period_options": period_options,
                     "preference": "none",
                 }
             )
@@ -142,10 +189,12 @@ def tokenize_availability():
 
             rows.append(
                 {
-                    "course_id": get_course_id(row["course_code"]),
-                    "teacher_name": row["teacher_name"],
+                    "course_id": course_id,
+                    "teacher_name": teacher_name,
                     "day_group": get_day_group(raw_text),
-                    "period_options": get_period_options(raw_text),
+                    "period_options": get_period_options(
+                        raw_text, course_id, credit_lookup
+                    ),
                     "preference": get_preference(raw_text),
                 }
             )
@@ -153,10 +202,11 @@ def tokenize_availability():
     tokenized = pd.DataFrame(rows)
     tokenized.to_csv(OUTPUT_FILE, index=False)
 
-    print(f"Saved cleaned tokenized availability to {OUTPUT_FILE}")
+    print(f"Saved tokenized availability to {OUTPUT_FILE}")
     print(tokenized)
 
     return tokenized
+
 
 if __name__ == "__main__":
     tokenize_availability()
