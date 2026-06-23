@@ -64,19 +64,19 @@ def get_period_options(text):
         return "7"
 
     if "after 12:00" in text or "after 12" in text:
-        return "3,4,5,6,7,8,9"
+        return "3,4,5,6,7"
 
     if "after 12:30" in text:
-        return "4,5,6,7,8,9"
+        return "4,5,6,7"
 
     if "after 15:00" in text:
-        return "6,7,8,9"
+        return "6,7"
 
     if "after 16:00" in text:
-        return "7,8,9"
+        return "7"
 
     if "any time" in text or "anytime" in text:
-        return "1,2,3,4,5,6,7,8,9"
+        return "8"
 
     return ""
 
@@ -128,7 +128,7 @@ def tokenize_availability():
                     "course_id": get_course_id(row["course_code"]),
                     "teacher_name": row["teacher_name"],
                     "day_group": "ALL",
-                    "period_options": "1,2,3,4,5,6,7,8,9",
+                    "period_options": "1,2,3,4,5,6,7",
                     "preference": "none",
                 }
             )
