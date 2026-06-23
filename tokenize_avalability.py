@@ -10,6 +10,7 @@ OUTPUT_FILE = ROOT / "tokenized_availability.csv"
 
 
 def clean_course_name(name):
+    # course name clean
     if pd.isna(name):
         return ""
 
@@ -17,6 +18,7 @@ def clean_course_name(name):
 
 
 def normalize_text(text):
+    # make everything uniform for tokenizing is done right
     if pd.isna(text):
         return ""
 
@@ -24,6 +26,7 @@ def normalize_text(text):
 
 
 def get_day_group(text):
+    # T1
     text = normalize_text(text)
 
     if pd.isna(text):
@@ -47,6 +50,7 @@ def get_day_group(text):
 
 
 def get_days(text):
+    # T2
     text = normalize_text(text)
 
     if "m/w" in text or "mw" in text:
@@ -63,6 +67,7 @@ def get_days(text):
 
 
 def get_period_type(text):
+    # T3
     text = normalize_text(text)
 
     if not text:
@@ -89,6 +94,7 @@ def get_period_type(text):
 
 
 def get_hour_range(text):
+    # T4
     text = normalize_text(text)
 
     match = re.search(r"(\d{1,2}:\d{2})\s*[-–]\s*(\d{1,2}:\d{2})", text)
@@ -118,6 +124,7 @@ def get_hour_range(text):
 
 
 def get_note(text):
+    # T5
     text = normalize_text(text)
 
     notes = []
@@ -140,7 +147,7 @@ def get_note(text):
 def tokenize_availability():
     df = pd.read_csv(INPUT_FILE)
 
-    # Standardize column names from your current CSV
+    # Standardize column names from current CSV
     df = df.rename(
         columns={
             "Course Code": "course_code",
