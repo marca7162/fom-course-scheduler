@@ -14,8 +14,15 @@ def get_student_id(student_name):
 
 
 def get_course_id(course_text):
-    match = re.search(r"(\d+)", str(course_text))
-    return int(match.group(1)) if match else None
+    if pd.isna(course_text):
+        return None
+
+    parts = str(course_text).split()
+
+    if len(parts) >= 2:
+        return f"{parts[0]} {parts[1]}"
+
+    return str(course_text).strip()
 
 
 def tokenize_enrollment():
