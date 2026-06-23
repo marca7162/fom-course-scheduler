@@ -1,0 +1,8 @@
+teachers
+students
+courses
+availability
+periods
+rooms
+student_register
+teacher_courses
