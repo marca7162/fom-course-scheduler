@@ -10,8 +10,7 @@ MADR 3002,Tania de la Fuente,ALL,"1,2,3,4,5,6,7",none
 MADR 3006,Carlos Colón,MW,"1,2",required
 MADR 3006,Carlos Colón,TTH,"1,2",required
 MADR 3008,Luis Toro,TTH,"4,5,6,7",required
-MADR 3012,Carlos Colón,MW,"1,2",required
-MADR 3012,Carlos Colón,TTH,"1,2",required
+MADR 3012,Carlos Colón,ALL,"1,2",once_per_week
 MADR 3013,Isabel Menéndez,ALL,"1,2,3,4,5,6,7",none
 MADR 3014,Carlos Colón,MW,"1,2",required
 MADR 3014,Carlos Colón,TTH,"1,2",required
@@ -36,4 +35,4 @@ MADR 3711,Samar Khalife,TTH,"1,2",required
 MADR 4041,Diego González,ALL,"1,2,3,4,5,6,7",none
 MADR 4511W,Ana Sanmartín,MW,7,required
 MADR 4611,Anas Abbood,ALL,"1,2,3,4,5,6,7",none
-MADR 4901,Julian Taylor,ALL,"1,2,3,4,5,6,7",none
+MADR 4901,Julian Taylor,ALL,"1,2,3,4,5,6,7",once_per_week
