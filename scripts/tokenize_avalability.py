@@ -3,16 +3,17 @@ from pathlib import Path
 import pandas as pd
 
 
-ROOT = Path(__file__).resolve().parent
+PROJECT_ROOT = Path(__file__).resolve().parent.parent
+CSV_DIR = PROJECT_ROOT / "csv_files"
 
-INPUT_FILE = ROOT / "clean_availability.csv"
-COUNTS_FILE = ROOT / "clean_counts.csv"
-OUTPUT_FILE = ROOT / "tokenized_availability.csv"
+INPUT_FILE = CSV_DIR / "clean_availability.csv"
+COUNTS_FILE = CSV_DIR / "clean_counts.csv"
+OUTPUT_FILE = CSV_DIR / "tokenized_availability.csv"
 
 
 ONCE_PER_WEEK_COURSES = {
-    "MADR 3012",  # Internship In Spain
-    "MADR 4901",  # Research Laboratory In Psychology
+    "MADR 3012",
+    "MADR 4901",
 }
 
 
@@ -24,11 +25,11 @@ def normalize_text(text):
 
 def get_course_id(course_text):
     parts = str(course_text).strip().split()
-
-    if len(parts) >= 2:
-        return f"{parts[0]} {parts[1]}"
-
-    return str(course_text).strip()
+    return (
+        f"{parts[0]} {parts[1]}"
+        if len(parts) >= 2
+        else str(course_text).strip()
+    )
 
 
 def is_once_per_week_course(course_id):
@@ -54,7 +55,9 @@ def load_credit_lookup():
     ]
 
     counts["course_id"] = counts["full_course_list"].apply(get_course_id)
-    counts["credits"] = pd.to_numeric(counts["credits"], errors="coerce")
+    counts["credits"] = pd.to_numeric(
+        counts["credits"], errors="coerce"
+    ).astype("Int64")
 
     return dict(zip(counts["course_id"], counts["credits"]))
 
@@ -172,7 +175,6 @@ def tokenize_availability():
 
     df = df.rename(
         columns={
-            # old headers
             "Course Code": "course_id",
             "Course Name": "course_name",
             "Course Name ": "course_name",
@@ -180,7 +182,6 @@ def tokenize_availability():
             "Instructor ": "teacher_name",
             "Availability 1": "availability_1",
             "Availability 2": "availability_2",
-            # new snake_case headers
             "course_code": "course_id",
             "course_name": "course_name",
             "instructor": "teacher_name",
@@ -262,9 +263,7 @@ def tokenize_availability():
             )
 
     tokenized = pd.DataFrame(rows)
-
-    tokenized = tokenized.drop_duplicates()
-    tokenized = tokenized.reset_index(drop=True)
+    tokenized = tokenized.drop_duplicates().reset_index(drop=True)
 
     tokenized.to_csv(OUTPUT_FILE, index=False)
 
