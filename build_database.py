@@ -19,7 +19,7 @@ FILES = {
     "availability": ROOT / "clean_availability.csv",
     "periods": ROOT / "clean_periods.csv",
     "courses": ROOT / "clean_counts.csv",
-    "rooms": ROOT / "rooms.csv"
+    "sheets_rooms": ROOT / "rooms.csv"
 }
 
 
