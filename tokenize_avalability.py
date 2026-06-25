@@ -10,6 +10,12 @@ COUNTS_FILE = ROOT / "clean_counts.csv"
 OUTPUT_FILE = ROOT / "tokenized_availability.csv"
 
 
+ONCE_PER_WEEK_COURSES = {
+    "MADR 3012",  # Internship In Spain
+    "MADR 4901",  # Research Laboratory In Psychology
+}
+
+
 def normalize_text(text):
     if pd.isna(text):
         return ""
@@ -23,6 +29,10 @@ def get_course_id(course_text):
         return f"{parts[0]} {parts[1]}"
 
     return str(course_text).strip()
+
+
+def is_once_per_week_course(course_id):
+    return course_id in ONCE_PER_WEEK_COURSES
 
 
 def load_credit_lookup():
@@ -120,8 +130,11 @@ def get_period_options(text, course_id, credit_lookup):
     return add_period_8_if_five_credits(base_options, course_id, credit_lookup)
 
 
-def get_preference(text):
+def get_preference(text, course_id):
     text = normalize_text(text)
+
+    if is_once_per_week_course(course_id):
+        return "once_per_week"
 
     if "prefers second" in text:
         return "prefer_2"
@@ -176,7 +189,11 @@ def tokenize_availability():
                     "teacher_name": teacher_name,
                     "day_group": "ALL",
                     "period_options": period_options,
-                    "preference": "none",
+                    "preference": (
+                        "once_per_week"
+                        if is_once_per_week_course(course_id)
+                        else "none"
+                    ),
                 }
             )
             continue
@@ -191,15 +208,20 @@ def tokenize_availability():
                 {
                     "course_id": course_id,
                     "teacher_name": teacher_name,
-                    "day_group": get_day_group(raw_text),
+                    "day_group": (
+                        "ALL"
+                        if is_once_per_week_course(course_id)
+                        else get_day_group(raw_text)
+                    ),
                     "period_options": get_period_options(
                         raw_text, course_id, credit_lookup
                     ),
-                    "preference": get_preference(raw_text),
+                    "preference": get_preference(raw_text, course_id),
                 }
             )
 
     tokenized = pd.DataFrame(rows)
+    tokenized = tokenized.drop_duplicates()
     tokenized.to_csv(OUTPUT_FILE, index=False)
 
     print(f"Saved tokenized availability to {OUTPUT_FILE}")
