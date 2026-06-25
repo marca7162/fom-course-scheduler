@@ -9,6 +9,7 @@ DB_DIR = PROJECT_ROOT / "db"
 
 DB_FILE = DB_DIR / "FOM_Intern_Database.db"
 COUNTS_FILE = CSV_DIR / "clean_counts.csv"
+STUDENTS_FILE = CSV_DIR / "clean_enrollment.csv"
 
 
 def get_course_id(full_course):
@@ -32,6 +33,18 @@ def get_course_name(full_course):
 def import_courses():
     db = sqlite3.connect(DB_FILE)
     cursor = db.cursor()
+
+    cursor.execute("drop table courses")
+    cursor.execute(
+        """
+        CREATE TABLE IF NOT EXISTS courses (
+            courseCode VARCHAR(15) PRIMARY KEY,
+            courseName VARCHAR(50) NOT NULL,
+            credits INTEGER NOT NULL,
+            totalRegisteredStudents INTEGER NOT NULL
+        );
+        """
+    )
 
     with open(COUNTS_FILE, newline="", encoding="utf-8") as file:
         reader = csv.DictReader(file)
@@ -61,6 +74,31 @@ def import_courses():
     db.commit()
     db.close()
 
+def import_students():
+    db = sqlite3.connect(DB_FILE)
+    cursor = db.cursor()
+
+    cursor.execute("drop table students")
+    cursor.execute(
+        """
+        CREATE TABLE IF NOT EXISTS students (
+            stdId INTEGER PRIMARY KEY AUTOINCREMENT,
+            stdName VARCHAR(50) NOT NULL
+        );
+        """
+    )
+    
+    with open(STUDENTS_FILE, newline="", encoding="utf-8") as file:
+        reader = csv.DictReader(file)
+
+        for row in reader:
+            command = "insert into students (stdName) values ('" + row['student_name'] + "')"
+            cursor.execute(command)
+            print('inserted ' + row["student_name"])
+        db.commit()
+        db.close()
+
 
 if __name__ == "__main__":
-    import_courses()
+    # import_courses()
+    import_students()
