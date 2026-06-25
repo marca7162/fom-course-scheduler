@@ -1,14 +1,16 @@
 from pathlib import Path
 import pandas as pd
 
-ROOT = Path(__file__).resolve().parent
 
-INPUT_FILE = ROOT / "Sample Enrollement Record.xlsx"
+PROJECT_ROOT = Path(__file__).resolve().parent.parent
+CSV_DIR = PROJECT_ROOT / "csv_files"
 
-OUTPUT_ENROLLMENT = ROOT / "clean_enrollment.csv"
-OUTPUT_PERIODS = ROOT / "clean_periods.csv"
-OUTPUT_AVAILABILITY = ROOT / "clean_availability.csv"
-OUTPUT_COUNTS = ROOT / "clean_counts.csv"
+INPUT_FILE = PROJECT_ROOT / "Sample Enrollement Record.xlsx"
+
+OUTPUT_ENROLLMENT = CSV_DIR / "clean_enrollment.csv"
+OUTPUT_PERIODS = CSV_DIR / "clean_periods.csv"
+OUTPUT_AVAILABILITY = CSV_DIR / "clean_availability.csv"
+OUTPUT_COUNTS = CSV_DIR / "clean_counts.csv"
 
 
 def clean_enrollment():
@@ -39,18 +41,11 @@ def clean_enrollment():
 
 
 def clean_counts():
-    df = pd.read_excel(
-        INPUT_FILE,
-        sheet_name="Final Enrollment",
-        header=1,
-    )
+    df = pd.read_excel(INPUT_FILE, sheet_name="Final Enrollment", header=1)
 
     df = df[["Full Course List", "Credits"]].copy()
 
-    df.columns = [
-        "full_course_list",
-        "credits",
-    ]
+    df.columns = ["full_course_list", "credits"]
 
     df = df.dropna(subset=["full_course_list"])
 
@@ -60,30 +55,22 @@ def clean_counts():
 
     df = df.reset_index(drop=True)
 
-    # Convert credits from float (3.0, 5.0) to int (3, 5)
     df["credits"] = pd.to_numeric(df["credits"], errors="coerce").astype(int)
 
     df.to_csv(OUTPUT_COUNTS, index=False)
+
 
 def clean_periods():
     df = pd.read_excel(INPUT_FILE, sheet_name="Class Periods", header=None)
 
     clean_df = df.iloc[1:, 0:5].copy()
 
-    clean_df.columns = [
-        "time",
-        "m",
-        "t",
-        "w",
-        "th",
-    ]
+    clean_df.columns = ["time", "m", "t", "w", "th"]
 
-    # Remove empty rows
     clean_df = clean_df.dropna(subset=["time"], how="all").reset_index(
         drop=True
     )
 
-    # Add period numbers (1, 2, 3, ...)
     clean_df.insert(0, "period", range(1, len(clean_df) + 1))
 
     clean_df.to_csv(OUTPUT_PERIODS, index=False)
@@ -91,9 +78,7 @@ def clean_periods():
 
 def clean_availability():
     df = pd.read_excel(
-        INPUT_FILE,
-        sheet_name="Teacher Availability",
-        header=None,
+        INPUT_FILE, sheet_name="Teacher Availability", header=None
     )
 
     clean_df = df.iloc[:, 0:5].copy()
@@ -128,6 +113,8 @@ def clean_availability():
 
 
 def main():
+    CSV_DIR.mkdir(exist_ok=True)
+
     clean_enrollment()
     clean_counts()
     clean_periods()
