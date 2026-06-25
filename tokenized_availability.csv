@@ -1,39 +1,39 @@
 course_id,teacher_name,day_group,period_options,preference
-1001,Lola Romero,MW,"1,2",required
-1001,Lola Romero,TTH,"1,2",required
-1002,Carmen Chacón,MW,"3,4,5,6,7",required
-1003,Isabel Piera,TTH,1,required
-1003,Isabel Piera,TTH,2,required
-1004,Diego Pita,ALL,"1,2,3,4,5,6,7",none
-3001,Luis Toro,ALL,"1,2,3,4,5,6,7",none
-3002,Tania de la Fuente,ALL,"1,2,3,4,5,6,7",none
-3006,Carlos Colón,MW,"1,2",required
-3006,Carlos Colón,TTH,"1,2",required
-3008,Luis Toro,TTH,"3,4,5,6,7",required
-3012,Carlos Colón,MW,"1,2",required
-3012,Carlos Colón,TTH,"1,2",required
-3013,Isabel Menéndez,ALL,"1,2,3,4,5,6,7",none
-3014,Carlos Colón,MW,"1,2",required
-3014,Carlos Colón,TTH,"1,2",required
-3017,Isabel Piera,TTH,1,required
-3017,Isabel Piera,TTH,2,required
-3018,Ksenija Jovanovic,TTH,"1,2",prefer_2
-3019,David Sarias,TH,"6,7",two_in_row
-3021,Marta López Beriso,T,5,classroom
-3021,Marta López Beriso,TH,7,museum
-3023,Ksenija Jovanovic,ALL,"1,2,3,4,5,6,7",none
-3024,Lola Romero,MW,"1,2",required
-3024,Lola Romero,TTH,"1,2",required
-3025,Marta López Beriso,ALL,"1,2,3,4,5,6,7",none
-3026,Isabel Menéndez,ALL,"1,2,3,4,5,6,7",none
-3027,Marta López Beriso,ALL,"1,2,3,4,5,6,7",none
-3031,Marta Gray,ALL,"1,2,3,4,5,6,7",none
-3081,Anas Abbood,ALL,"1,2,3,4,5,6,7",none
-3206,Miriam Mower,ALL,"1,2,3,4,5,6,7",none
-3301,Samar Khalife,TTH,"1,2",required
-3604,Amanda Blanco,MW,1,required
-3711,Samar Khalife,TTH,"1,2",required
-4041,Diego González,ALL,"1,2,3,4,5,6,7",none
-4511,Ana Sanmartín,MW,7,required
-4611,Anas Abbood,ALL,"1,2,3,4,5,6,7",none
-4901,Julian Taylor,ALL,"1,2,3,4,5,6,7",none
+MADR 1001,Lola Romero,MW,"1,2,8",required
+MADR 1001,Lola Romero,TTH,"1,2,8",required
+MADR 1002,Carmen Chacón,MW,"1,2,3,4,5,6,7,8",required
+MADR 1003,Isabel Piera,TTH,"1,8",required
+MADR 1003,Isabel Piera,TTH,"2,8",required
+MADR 1004,Diego Pita,ALL,"1,2,3,4,5,6,7,8",none
+MADR 3001,Luis Toro,ALL,"1,2,3,4,5,6,7",none
+MADR 3002,Tania de la Fuente,ALL,"1,2,3,4,5,6,7",none
+MADR 3006,Carlos Colón,MW,"1,2",required
+MADR 3006,Carlos Colón,TTH,"1,2",required
+MADR 3008,Luis Toro,TTH,"4,5,6,7",required
+MADR 3012,Carlos Colón,MW,"1,2",required
+MADR 3012,Carlos Colón,TTH,"1,2",required
+MADR 3013,Isabel Menéndez,ALL,"1,2,3,4,5,6,7",none
+MADR 3014,Carlos Colón,MW,"1,2",required
+MADR 3014,Carlos Colón,TTH,"1,2",required
+MADR 3017,Isabel Piera,TTH,1,required
+MADR 3017,Isabel Piera,TTH,2,required
+MADR 3018,Ksenija Jovanovic,TTH,"1,2,3,4,5,6,7",prefer_2
+MADR 3019,David Sarias,TH,"6,7",two_in_row
+MADR 3021,Marta López Beriso,T,5,classroom
+MADR 3021,Marta López Beriso,TH,7,museum
+MADR 3023,Ksenija Jovanovic,ALL,"1,2,3,4,5,6,7",none
+MADR 3024,Lola Romero,MW,"1,2",required
+MADR 3024,Lola Romero,TTH,"1,2",required
+MADR 3025,Marta López Beriso,ALL,"1,2,3,4,5,6,7",none
+MADR 3026,Isabel Menéndez,ALL,"1,2,3,4,5,6,7",none
+MADR 3027,Marta López Beriso,ALL,"1,2,3,4,5,6,7",none
+MADR 3031,Marta Gray,ALL,"1,2,3,4,5,6,7",none
+MADR 3081W,Anas Abbood,ALL,"1,2,3,4,5,6,7",none
+MADR 3206,Miriam Mower,ALL,"1,2,3,4,5,6,7",none
+MADR 3301,Samar Khalife,TTH,"1,2",required
+MADR 3604,Amanda Blanco,MW,1,required
+MADR 3711,Samar Khalife,TTH,"1,2",required
+MADR 4041,Diego González,ALL,"1,2,3,4,5,6,7",none
+MADR 4511W,Ana Sanmartín,MW,7,required
+MADR 4611,Anas Abbood,ALL,"1,2,3,4,5,6,7",none
+MADR 4901,Julian Taylor,ALL,"1,2,3,4,5,6,7",none
