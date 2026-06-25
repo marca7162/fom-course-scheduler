@@ -38,10 +38,25 @@ def is_once_per_week_course(course_id):
 def load_credit_lookup():
     counts = pd.read_csv(COUNTS_FILE)
 
-    counts["course_id"] = counts["Full Course List"].apply(get_course_id)
-    counts["Credits"] = pd.to_numeric(counts["Credits"], errors="coerce")
+    counts = counts.rename(
+        columns={
+            "Full Course List": "full_course_list",
+            "Credits": "credits",
+        }
+    )
 
-    return dict(zip(counts["course_id"], counts["Credits"]))
+    counts["full_course_list"] = (
+        counts["full_course_list"].astype(str).str.strip()
+    )
+    counts = counts[counts["full_course_list"] != ""]
+    counts = counts[
+        ~counts["full_course_list"].str.startswith("Notes", na=False)
+    ]
+
+    counts["course_id"] = counts["full_course_list"].apply(get_course_id)
+    counts["credits"] = pd.to_numeric(counts["credits"], errors="coerce")
+
+    return dict(zip(counts["course_id"], counts["credits"]))
 
 
 def add_period_8_if_five_credits(period_options, course_id, credit_lookup):
@@ -126,7 +141,6 @@ def get_base_period_options(text):
 
 def get_period_options(text, course_id, credit_lookup):
     base_options = get_base_period_options(text)
-
     return add_period_8_if_five_credits(base_options, course_id, credit_lookup)
 
 
@@ -158,13 +172,37 @@ def tokenize_availability():
 
     df = df.rename(
         columns={
+            # old headers
             "Course Code": "course_id",
+            "Course Name": "course_name",
             "Course Name ": "course_name",
+            "Instructor": "teacher_name",
             "Instructor ": "teacher_name",
             "Availability 1": "availability_1",
             "Availability 2": "availability_2",
+            # new snake_case headers
+            "course_code": "course_id",
+            "course_name": "course_name",
+            "instructor": "teacher_name",
+            "availability_1": "availability_1",
+            "availability_2": "availability_2",
         }
     )
+
+    required_columns = {
+        "course_id",
+        "course_name",
+        "teacher_name",
+        "availability_1",
+        "availability_2",
+    }
+
+    missing_columns = required_columns - set(df.columns)
+
+    if missing_columns:
+        raise ValueError(
+            f"Missing columns in clean_availability.csv: {missing_columns}"
+        )
 
     rows = []
 
@@ -196,6 +234,7 @@ def tokenize_availability():
                     ),
                 }
             )
+
             continue
 
         for col in ["availability_1", "availability_2"]:
@@ -214,14 +253,19 @@ def tokenize_availability():
                         else get_day_group(raw_text)
                     ),
                     "period_options": get_period_options(
-                        raw_text, course_id, credit_lookup
+                        raw_text,
+                        course_id,
+                        credit_lookup,
                     ),
                     "preference": get_preference(raw_text, course_id),
                 }
             )
 
     tokenized = pd.DataFrame(rows)
+
     tokenized = tokenized.drop_duplicates()
+    tokenized = tokenized.reset_index(drop=True)
+
     tokenized.to_csv(OUTPUT_FILE, index=False)
 
     print(f"Saved tokenized availability to {OUTPUT_FILE}")
