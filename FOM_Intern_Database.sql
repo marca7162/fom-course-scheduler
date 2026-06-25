@@ -1,14 +1,16 @@
-create database FOM_Schedule;
+--create database FOM_Schedule;
 
-use FOM_Schedule;
+--use FOM_Schedule;
 
-create table rooms(
+--drop table if EXISTS rooms
+CREATE TABLE IF NOT EXISTS rooms(
 	roomNo varchar(15) primary key,
 	capacity int  not null,
 	rState char(1) not null
 );
-drop table teachers;
-create table teachers(
+
+--drop table if exists teachers
+create table if not exists teachers(
 	tNo INT IDENTITY (1, 1) primary key,
 	tName varchar (50) not null,
 	availableDays varchar(15) not null,
@@ -16,7 +18,8 @@ create table teachers(
 	);
 insert into teachers (tName,availableDays, priods) values ('ABC','M/W', '1')
 
-create table courses(
+--drop table if exists courses
+create table if not EXISTS courses(
 	courseCode varchar(15) primary key,
 	courseName varchar(50) not null, 
 	credits int not null,
@@ -25,8 +28,7 @@ create table courses(
  insert into courses values('101','CS', 3 , 40);
  insert into courses values('102','CS-II', 3 , 40);
 
-drop table Teach_Course;
-create table Teach_Course(
+create table if not exists Teach_Course(
 	T_ID INT ,
 	C_ID varchar(15),
 
@@ -36,14 +38,14 @@ create table Teach_Course(
 insert into Teach_Course values('1','101')
 insert into Teach_Course values('1','102')
 
-create table students(
+create table if not exists students(
 	stdId INT IDENTITY (1, 1) primary key,
 	stdName varchar (50) not null
 )
 
 insert into students values('Nana')
 
-create table student_courses(
+create table if not exists student_courses(
 	stdID int ,
 	courseID varchar(15),
 	foreign key (stdID) references students (stdId) ,
