@@ -60,8 +60,10 @@ def clean_counts():
 
     df = df.reset_index(drop=True)
 
-    df.to_csv(OUTPUT_COUNTS, index=False)
+    # Convert credits from float (3.0, 5.0) to int (3, 5)
+    df["credits"] = pd.to_numeric(df["credits"], errors="coerce").astype(int)
 
+    df.to_csv(OUTPUT_COUNTS, index=False)
 
 def clean_periods():
     df = pd.read_excel(INPUT_FILE, sheet_name="Class Periods", header=None)
