@@ -76,8 +76,13 @@ def clean_periods():
         "th",
     ]
 
-    clean_df = clean_df.dropna(subset=["time"], how="all")
-    clean_df = clean_df.reset_index(drop=True)
+    # Remove empty rows
+    clean_df = clean_df.dropna(subset=["time"], how="all").reset_index(
+        drop=True
+    )
+
+    # Add period numbers (1, 2, 3, ...)
+    clean_df.insert(0, "period", range(1, len(clean_df) + 1))
 
     clean_df.to_csv(OUTPUT_PERIODS, index=False)
 
