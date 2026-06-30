@@ -11,6 +11,7 @@ DB_FILE = DB_DIR / "FOM_Intern_Database.db"
 COUNTS_FILE = CSV_DIR / "clean_counts.csv"
 STUDENTS_FILE = CSV_DIR / "clean_enrollment.csv"
 STUDENT_COURSES_FILE = CSV_DIR / "tokenized_enrollment.csv"
+TEACHERS_FILE = CSV_DIR / "tokenized_availability.csv"
 
 
 def get_course_id(full_course):
@@ -125,11 +126,39 @@ def import_tokenized_enrollment():
             cursor.execute(command)
             print("inserted " + row["student_id"] + " with " + row["course_id"])
         db.commit()
-        db.close
+        db.close()
 
+def import_teachers():
+    db = sqlite3.connect(DB_FILE)
+    cursor = db.cursor()
+
+    cursor.execute("drop table if exists teachers")
+    # cursor.execute("drop table sqlite_sequence")
+    cursor.execute(
+        """
+        create table if not exists teachers(
+        tID integer primary key autoincrement,
+        tName varchar (50) not null,
+        availableDays varchar(15) not null,
+        periods char(1) not null
+        );
+        """)
+    
+    with open(TEACHERS_FILE, newline="", encoding="utf-8") as file:
+        reader = csv.DictReader(file)
+
+        for row in reader:
+            command = "insert into teachers (tName, availableDays, periods) values ('" 
+            command += row['teacher_name'] + "', '" + row['day_group'] + "', '0')"
+            cursor.execute(command)
+            print('inserted ' + row['teacher_name'])
+    
+    db.commit()
+    db.close()
 
 
 if __name__ == "__main__":
     # import_courses()
     # import_students()
-    import_tokenized_enrollment()
+    # import_tokenized_enrollment()
+    import_teachers()
