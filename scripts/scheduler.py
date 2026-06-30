@@ -7,7 +7,7 @@ from pathlib import Path
 from typing import Set, Tuple, Dict, List, Optional, FrozenSet
 
 # ---------- Paths ----------
-PROJECT_ROOT = Path(__file__).resolve().parent
+PROJECT_ROOT = Path(__file__).resolve().parent.parent
 CSV_DIR = PROJECT_ROOT / "csv_files"
 DB_DIR = PROJECT_ROOT / "db"
 

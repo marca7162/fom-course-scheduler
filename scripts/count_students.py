@@ -1,4 +1,3 @@
-import csv
 import sqlite3
 from pathlib import Path
 import pandas as pd
@@ -17,17 +16,13 @@ if __name__ == "__main__":
     counts = dict()
     for row in rows:
         counts[row[0]] = 0
-        print(row)
     for row in rows:
         counts[row[0]] += 1
     for row in rows:
         command = "update courses "
         command += "set totalRegisteredStudents = '" + str(counts[row[0]]) + "'"
         command += " where courseCode = '" + str(row[0]) + "'"
-        print(command)
         cursor.execute(command)
-    
-
 
     db.commit()
     db.close()
