@@ -183,8 +183,10 @@ def import_rooms():
 
         for row in reader:
             cursor.execute(
-                '''insert into rooms (roomNo, capacity, av1, av2, av3, av4, av5, av6, av7)
-                values (?, ?, ?, ?, ?, ?, ?, ?, ?)''',
+                '''
+                insert into rooms (roomNo, capacity, av1, av2, av3, av4, av5, av6, av7)
+                values (?, ?, ?, ?, ?, ?, ?, ?, ?)
+                ''',
                 (row["Room Number"], row['Capacity'], row['Av1'], row['Av2'], row['Av3'], row['Av4'],
                   row['Av5'], row['Av6'], row['Av7']),
             )
