@@ -156,9 +156,37 @@ def import_teachers():
     db.commit()
     db.close()
 
+def teachers_to_courses():
+    db = sqlite3.connect(DB_FILE)
+    cursor = db.cursor()
+
+    cursor.execute("drop table if exists teach_course")
+    cursor.execute(
+    """create table if not exists teach_course(
+	T_ID INT ,
+	C_ID varchar(15),
+
+	foreign key (T_ID) references teachers  (tNo) ,
+	foreign key (C_ID) references courses  (courseCode) 
+    );""")
+
+    with open(TEACHERS_FILE, newline="", encoding="utf-8") as file:
+        reader = csv.DictReader(file)
+        i = 1
+        for row in reader:
+            command = "insert into teach_course values ('"
+            command += str(i) + "', '" + row['course_id'] + "')"
+            print(command)
+            i+=1
+            cursor.execute(command)
+        
+        db.commit()
+        db.close()
+
 
 if __name__ == "__main__":
     # import_courses()
     # import_students()
     # import_tokenized_enrollment()
-    import_teachers()
+    # import_teachers()
+    teachers_to_courses()

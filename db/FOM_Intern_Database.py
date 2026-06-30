@@ -18,10 +18,10 @@ if __name__ == "__main__":
     db = sqlite3.connect(DB_FILE)
     cursor = db.cursor()
 
-    cursor.execute("DROP TABLE IF EXISTS rooms")
+    # cursor.execute("DROP TABLE IF EXISTS rooms")
 
-    df = pd.read_csv(ROOMS_FILE)
-    df.to_sql("rooms", db, if_exists="replace", index=False)
+    # df = pd.read_csv(ROOMS_FILE)
+    # df.to_sql("rooms", db, if_exists="replace", index=False)
 
     cursor.execute(
         """
@@ -67,11 +67,11 @@ if __name__ == "__main__":
 
     cursor.execute(
         """
-        CREATE TABLE IF NOT EXISTS student_courses (
-            stdID INTEGER,
-            courseID VARCHAR(15),
-            FOREIGN KEY (stdID) REFERENCES students(stdId),
-            FOREIGN KEY (courseID) REFERENCES courses(courseCode)
+        create table if not exists teachers(
+        tNo INT IDENTITY (1, 1) primary key,
+        tName varchar (50) not null,
+        availableDays varchar(15) not null,
+        priods char(1) not null
         );
         """
     )
@@ -79,4 +79,4 @@ if __name__ == "__main__":
     db.commit()
     db.close()
 
-    print(f"Committed database to {DB_FILE}")
+    # print(f"Committed database to {DB_FILE}")
