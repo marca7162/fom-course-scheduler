@@ -12,6 +12,7 @@ COUNTS_FILE = CSV_DIR / "clean_counts.csv"
 STUDENTS_FILE = CSV_DIR / "clean_enrollment.csv"
 STUDENT_COURSES_FILE = CSV_DIR / "tokenized_enrollment.csv"
 TEACHERS_FILE = CSV_DIR / "tokenized_availability.csv"
+ROOMS_FILE = CSV_DIR / "rooms.csv"
 
 
 def get_course_id(full_course):
@@ -158,9 +159,44 @@ def import_teachers():
     db.commit()
     db.close()
 
+def import_rooms():
+    db = sqlite3.connect(DB_FILE)
+    cursor = db.cursor()
+
+    cursor.execute("drop table if exists rooms")
+    cursor.execute(
+        '''
+        CREATE TABLE IF NOT EXISTS rooms(
+	    roomNo varchar(15) primary key,
+	    capacity int  not null,
+	    av1 char(1) not null,
+        av2 char(1) not null,
+        av3 char(1) not null,
+        av4 char(1) not null,
+        av5 char(1) not null,
+        av6 char(1) not null,
+        av7 char(1) not null
+        );''')
+    
+    with open(ROOMS_FILE, newline="", encoding="utf-8") as file:
+        reader = csv.DictReader(file)
+
+        for row in reader:
+            cursor.execute(
+                '''insert into rooms (roomNo, capacity, av1, av2, av3, av4, av5, av6, av7)
+                values (?, ?, ?, ?, ?, ?, ?, ?, ?)''',
+                (row["Room Number"], row['Capacity'], row['Av1'], row['Av2'], row['Av3'], row['Av4'],
+                  row['Av5'], row['Av6'], row['Av7']),
+            )
+            print('inserted ' + row["Room Number"])
+        
+        db.commit()
+        db.close()
+
 
 if __name__ == "__main__":
     # import_courses()
     # import_students()
     # import_tokenized_enrollment()
-    import_teachers()
+    # import_teachers()
+    import_rooms()
