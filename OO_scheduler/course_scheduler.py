@@ -116,77 +116,75 @@ def assign_rooms_backtracking(
     courses: init.List[init.Course],
     rooms: init.Dict[str, init.Room],
 ) -> init.Dict[str, init.Tuple[init.FrozenSet[init.Tuple[str, int]], str]]:
+
     items = []
     for course in courses:
         code = course.code
+
+        if code not in schedule:
+            continue
+
         pattern = schedule[code]
         needed = len(course.students)
         items.append((code, pattern, needed))
 
-    items.sort(key=lambda x: (-len(x[1]), -x[2]))
-    room_list = list(rooms.values())
+    # Hardest courses first:
+    # 1. bigger classes first
+    # 2. more periods first
+    items.sort(key=lambda x: (-x[2], -len(x[1])))
+
+    # Smallest rooms first so we do not waste big rooms
+    room_list = sorted(rooms.values(), key=lambda r: r.capacity)
+
     occupancy = init.defaultdict(set)
     assignment = {}
-    call_count = [0]
-    max_calls = 500000
 
     def backtrack(idx: int) -> bool:
-        call_count[0] += 1
-        
-        # Fail fast if too many iterations
-        if call_count[0] > max_calls:
-            print(f"  Backtracking exceeded {max_calls} calls, returning False")
-            return False
-        
-        if call_count[0] % 50000 == 0:
-            print(f"  [Progress: {call_count[0]} calls, at idx {idx}/{len(items)}]")
-        
         if idx == len(items):
             return True
-        
+
         code, pattern, needed = items[idx]
+
         candidates = []
         for room in room_list:
             if room.capacity < needed:
                 continue
-            free = True
-            for slot in pattern:
-                if slot in occupancy and room.number in occupancy[slot]:
-                    free = False
-                    break
-            if free:
-                candidates.append(room.number)
 
-        # Pruning: if no candidates, fail immediately
+            room_available = True
+            for slot in pattern:
+                if room.number in occupancy[slot]:
+                    room_available = False
+                    break
+
+            if room_available:
+                candidates.append(room)
+
         if not candidates:
             return False
-        
-        # Heuristic: prefer rooms already occupied (to cluster)
-        used_rooms = set()
-        for slot in pattern:
-            used_rooms.update(occupancy.get(slot, set()))
-        candidates.sort(key=lambda r: (r not in used_rooms, r))
-        
-        for room_num in candidates:
-            assignment[code] = room_num
+
+        for room in candidates:
+            assignment[code] = room.number
+
             for slot in pattern:
-                occupancy[slot].add(room_num)
+                occupancy[slot].add(room.number)
+
             if backtrack(idx + 1):
                 return True
+
             for slot in pattern:
-                occupancy[slot].remove(room_num)
+                occupancy[slot].remove(room.number)
+
             del assignment[code]
+
         return False
 
-    if backtrack(0):
-        result = {}
-        for course in courses:
-            code = course.code
-            pattern = schedule[code]
-            room = assignment[code]
-            result[code] = (pattern, room)
-        return result
-    else:
+    if not backtrack(0):
         raise RuntimeError(
             "No feasible room assignment found. Try adding more rooms or relaxing room capacity."
         )
+
+    result = {}
+    for code, pattern, needed in items:
+        result[code] = (pattern, assignment[code])
+
+    return result
