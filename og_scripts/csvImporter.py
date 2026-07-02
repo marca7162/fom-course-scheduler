@@ -1,3 +1,8 @@
+'''
+CSV Importer: Takes values from CSV files and adds them to the sql database. 
+Authors: Peter Reinecke and Adrian Marcatoma 
+'''
+
 import csv
 import sqlite3
 from pathlib import Path
@@ -16,7 +21,9 @@ ROOMS_FILE = CSV_DIR / "rooms.csv"
 
 teachers = []
 
-
+'''
+Returns a clean course ID String. For example: 'MADR 1001'
+'''
 def get_course_id(full_course):
     parts = str(full_course).strip().split()
 
@@ -25,7 +32,9 @@ def get_course_id(full_course):
 
     return str(full_course).strip()
 
-
+'''
+Returns a clean course name string. For example: 'Beginning Spanish (I)'
+'''
 def get_course_name(full_course):
     parts = str(full_course).strip().split()
 
@@ -34,7 +43,9 @@ def get_course_name(full_course):
 
     return ""
 
-
+'''
+Imports the courses from 'clean_counts.csv' to the sql database.
+'''
 def import_courses():
     db = sqlite3.connect(DB_FILE)
     cursor = db.cursor()
@@ -79,6 +90,9 @@ def import_courses():
     db.commit()
     db.close()
 
+'''
+imports the students from 'clean_enrollment.csv' into the SQL database.
+'''
 def import_students():
     db = sqlite3.connect(DB_FILE)
     cursor = db.cursor()
@@ -103,6 +117,10 @@ def import_students():
         db.commit()
         db.close()
 
+'''
+Imports the students' courses from 'tokenized_enrollment.csv' to the SQL database, referencing the
+student IDs from import_students and the course IDs from import_courses
+'''
 def import_tokenized_enrollment():
     db = sqlite3.connect(DB_FILE)
     cursor = db.cursor()
@@ -131,12 +149,14 @@ def import_tokenized_enrollment():
         db.commit()
         db.close()
 
+'''
+imports teachers from 'tokenized_availability.csv' into the SQL database and their daily availability.
+'''
 def import_teachers():
     db = sqlite3.connect(DB_FILE)
     cursor = db.cursor()
 
     cursor.execute("drop table if exists teachers")
-    # cursor.execute("drop table sqlite_sequence")
     cursor.execute(
         """
         create table if not exists teachers(
@@ -185,6 +205,9 @@ def import_teachers():
     db.commit()
     db.close()
 
+'''
+Imports the rooms from 'rooms.csv' into the SQL database.
+'''
 def import_rooms():
     db = sqlite3.connect(DB_FILE)
     cursor = db.cursor()
@@ -221,6 +244,10 @@ def import_rooms():
         db.commit()
         db.close()
 
+'''
+Imports the teachers from 'tokenized_availablility.csv' into the SQL database, referencing the 
+teacher IDs from import_teachers and the course IDs from import_courses.
+'''
 def teacher_courses():
     db = sqlite3.connect(DB_FILE)
     cursor = db.cursor()
