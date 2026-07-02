@@ -14,6 +14,8 @@ STUDENT_COURSES_FILE = CSV_DIR / "tokenized_enrollment.csv"
 TEACHERS_FILE = CSV_DIR / "tokenized_availability.csv"
 ROOMS_FILE = CSV_DIR / "rooms.csv"
 
+teachers = []
+
 
 def get_course_id(full_course):
     parts = str(full_course).strip().split()
@@ -151,7 +153,6 @@ def import_teachers():
     
     with open(TEACHERS_FILE, newline="", encoding="utf-8") as file:
         reader = csv.DictReader(file)
-        teachers = []
 
         for row in reader:
             if row["teacher_name"] not in teachers:
@@ -161,6 +162,9 @@ def import_teachers():
                 )
                 teachers.append(row["teacher_name"])
             tid = str(teachers.index(row['teacher_name']) + 1)
+            if 'ALL' in row["day_group"]:
+                cursor.execute(
+                    "update teachers set avM = 1 where tID = ?",(tid,))
             if 'M' in row["day_group"]:
                 cursor.execute(
                     "update teachers set avM = 1 where tID = ?",(tid,))
@@ -176,17 +180,6 @@ def import_teachers():
             elif 'T' in row["day_group"]:
                 cursor.execute(
                     "update teachers set avT = 1 where tID = ?",(tid,))
-
-        
-        # for row in reader:
-        #     print(row["day_group"])
-        #     if 'M' in row["day_group"]:
-        #         cursor.execute(
-        #             """update teachers
-        #                set avM = 1
-        #                where tID = ?
-        #             """,(teachers.index(row["teacher_name"]) + 1)
-        #         )
                 
     
     db.commit()
@@ -224,14 +217,39 @@ def import_rooms():
                   row['Av5'], row['Av6'], row['Av7']),
             )
             print('inserted ' + row["Room Number"])
-        
+       
         db.commit()
         db.close()
 
+def teacher_courses():
+    db = sqlite3.connect(DB_FILE)
+    cursor = db.cursor()
+
+    cursor.execute("drop table if exists teach_course")
+    cursor.execute("""
+                    create table if not exists teach_course(
+                    T_ID INT ,
+                    C_ID varchar(15),
+
+                    foreign key (T_ID) references teachers  (tNo) ,
+                    foreign key (C_ID) references courses  (courseCode) 
+                    );""")
+        
+    with open(TEACHERS_FILE, newline="", encoding="utf-8") as file:
+        reader = csv.DictReader(file)
+        for row in reader:
+            cursor.execute("""
+                           insert into teach_course values (?, ?)""", 
+                           (str(teachers.index(row['teacher_name']) + 1), row['course_id']))
+
+    db.commit()
+    db.close()
 
 if __name__ == "__main__":
+    # import_rooms()
     # import_courses()
     # import_students()
-    # import_tokenized_enrollment()
     import_teachers()
-    # import_rooms()
+    # import_tokenized_enrollment()
+    teacher_courses()
+
