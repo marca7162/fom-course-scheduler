@@ -128,11 +128,24 @@ def main():
             print(f"  - Course/Room schedule: {init.COURSE_ROOM_CSV}")
             print(f"  - Teacher schedule:      {init.TEACHER_CSV}")
             print(f"  - Student schedule:      {init.STUDENT_CSV}")
+            return True
         else:
             print("⚠️  room_schedule is empty – nothing to export.")
+            return False
     finally:
         conn.close()
 
 
+def run_multiple_times(n: int):
+    global success, fail
+    for _ in range(n):
+        if main():
+            success += 1
+        else:
+            fail += 1
+        print(f"\n Successful runs: {success}")
+        print(f" Failed runs: {fail}")
 if __name__ == "__main__":
-    main()
+    success = 0
+    fail = 0
+    run_multiple_times(100)
