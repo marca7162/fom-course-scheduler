@@ -11,8 +11,8 @@ def main():
     try:
         db.create_tables(conn)
         db.load_rooms(conn)
-        init.load_teachers_and_courses(conn)
-        init.load_students_and_enrollments(conn)
+        db.load_teachers_and_courses(conn)
+        db.load_students_and_enrollments(conn)
         print("Database created and data loaded successfully.")
 
         print("\n=== Building CSP model ===")
@@ -22,12 +22,10 @@ def main():
             return
 
         cursor = conn.cursor()
-        cursor.execute(
-            'SELECT "Room Number", Capacity, "Availability status (is full)" FROM rooms'
-        )
+        cursor.execute('SELECT "Room Number", Capacity FROM rooms')
         rooms = {}
         for row in cursor.fetchall():
-            rooms[row[0]] = init.Room(row[0], int(row[1]), bool(int(row[2])))
+            rooms[row[0]] = init.Room(row[0], int(row[1]), False)
 
         print(f"Number of courses to schedule: {len(courses)}")
         print(f"Number of rooms available: {len(rooms)}")
@@ -91,11 +89,11 @@ def main():
             for code, (pattern, room) in room_schedule.items():
                 print(f"  {code}: {sorted(pattern)} → Room {room}")
         except RuntimeError as e:
-            print(f"\n❌ Room assignment failed: {e}")
+            print(f"\n Room assignment failed: {e}")
             return
 
         # ----- Write to DB -----
-        cs.write_schedule_to_db(conn, room_schedule)
+        db.write_schedule_to_db(conn, room_schedule)
         print("\n✅ Schedule written to database table 'course_schedule'.")
 
         # ----- Add trigger (only if student conflicts were NOT relaxed) -----
@@ -115,7 +113,7 @@ def main():
             )
 
         # ----- Print student schedules -----
-        ex.print_student_schedules(conn, room_schedule, courses)
+        db.print_student_schedules(conn, room_schedule, courses)
 
         print("\n🎉 Scheduling complete!")
 

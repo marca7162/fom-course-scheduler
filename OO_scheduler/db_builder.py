@@ -17,7 +17,13 @@ def create_tables(conn: init.sqlite3.Connection):
         CREATE TABLE rooms (
             "Room Number" VARCHAR(10) PRIMARY KEY,
             Capacity INTEGER,
-            "Availability status (is full)" INTEGER
+            Av1 INTEGER,
+            Av2 INTEGER,
+            Av3 INTEGER,
+            Av4 INTEGER,
+            Av5 INTEGER,
+            Av6 INTEGER,
+            Av7 INTEGER
         );
 
         CREATE TABLE teachers (

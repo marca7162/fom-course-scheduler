@@ -127,10 +127,23 @@ def assign_rooms_backtracking(
     room_list = list(rooms.values())
     occupancy = init.defaultdict(set)
     assignment = {}
+    call_count = [0]
+    max_calls = 500000
 
     def backtrack(idx: int) -> bool:
+        call_count[0] += 1
+        
+        # Fail fast if too many iterations
+        if call_count[0] > max_calls:
+            print(f"  Backtracking exceeded {max_calls} calls, returning False")
+            return False
+        
+        if call_count[0] % 50000 == 0:
+            print(f"  [Progress: {call_count[0]} calls, at idx {idx}/{len(items)}]")
+        
         if idx == len(items):
             return True
+        
         code, pattern, needed = items[idx]
         candidates = []
         for room in room_list:
@@ -144,7 +157,16 @@ def assign_rooms_backtracking(
             if free:
                 candidates.append(room.number)
 
-        # Try candidates in order (could sort by capacity)
+        # Pruning: if no candidates, fail immediately
+        if not candidates:
+            return False
+        
+        # Heuristic: prefer rooms already occupied (to cluster)
+        used_rooms = set()
+        for slot in pattern:
+            used_rooms.update(occupancy.get(slot, set()))
+        candidates.sort(key=lambda r: (r not in used_rooms, r))
+        
         for room_num in candidates:
             assignment[code] = room_num
             for slot in pattern:

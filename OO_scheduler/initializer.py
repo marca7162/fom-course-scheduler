@@ -7,11 +7,10 @@ from pathlib import Path
 from typing import Set, Tuple, Dict, List, Optional, FrozenSet
 
 # ---------- Paths ----------
-PROJECT_ROOT = Path(__file__).resolve().parent.parent
+PROJECT_ROOT = Path(__file__).resolve().parents[1]
+
 CSV_DIR = PROJECT_ROOT / "csv_files"
 DB_DIR = PROJECT_ROOT / "db"
-
-# OUTPUT_DIR = Path("output")
 
 DB_DIR.mkdir(exist_ok=True)
 
@@ -19,11 +18,11 @@ DB_FILE = DB_DIR / "FOM_Intern_Database.db"
 
 ROOMS_CSV = CSV_DIR / "rooms.csv"
 ENROLL_CSV = CSV_DIR / "tokenized_enrollment.csv"
-AVAIL_CSV = CSV_DIR / "tokenized_availability - Copy.csv"  # new filename
+AVAIL_CSV = CSV_DIR / "tokenized_availability - Copy.csv"
 
-# Output file paths
 OUTPUT_DIR = PROJECT_ROOT / "output"
 OUTPUT_DIR.mkdir(exist_ok=True)
+
 COURSE_ROOM_CSV = OUTPUT_DIR / "course_room_schedule.csv"
 TEACHER_CSV = OUTPUT_DIR / "teacher_schedule.csv"
 STUDENT_CSV = OUTPUT_DIR / "student_schedule.csv"
