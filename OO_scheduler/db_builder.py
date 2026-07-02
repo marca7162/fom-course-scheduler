@@ -9,7 +9,7 @@ def create_tables(conn: init.sqlite3.Connection):
         DROP TABLE IF EXISTS course_schedule;
         DROP TABLE IF EXISTS student_courses;
         DROP TABLE IF EXISTS students;
-        DROP TABLE IF EXISTS Teach_Course;
+        DROP TABLE IF EXISTS teach_course;
         DROP TABLE IF EXISTS courses;
         DROP TABLE IF EXISTS teachers;
         DROP TABLE IF EXISTS rooms;
@@ -42,7 +42,7 @@ def create_tables(conn: init.sqlite3.Connection):
             totalRegisteredStudents INTEGER NOT NULL
         );
 
-        CREATE TABLE Teach_Course (
+        CREATE TABLE teach_course (
             T_ID INTEGER,
             C_ID VARCHAR(15),
             FOREIGN KEY (T_ID) REFERENCES teachers(tNo),
@@ -132,7 +132,7 @@ def load_teachers_and_courses(conn: init.sqlite3.Connection):
         teacher_name = rows[0]["teacher_name"]
         t_id = teachers[teacher_name]
         cursor.execute(
-            "INSERT INTO Teach_Course (T_ID, C_ID) VALUES (?, ?)",
+            "INSERT INTO teach_course (T_ID, C_ID) VALUES (?, ?)",
             (t_id, course),
         )
     conn.commit()
@@ -172,7 +172,7 @@ def get_course_data_from_db(
 
     cursor.execute("""
         SELECT C_ID, tName
-        FROM Teach_Course tc
+        FROM teach_course tc
         JOIN teachers t ON tc.T_ID = t.tNo
     """)
     teacher_of = dict(cursor.fetchall())
@@ -228,7 +228,7 @@ def write_schedule_to_db(
         cursor.execute(
             """
             SELECT tName FROM teachers t
-            JOIN Teach_Course tc ON t.tNo = tc.T_ID
+            JOIN teach_course tc ON t.tNo = tc.T_ID
             WHERE tc.C_ID = ?
         """,
             (course_code,),
