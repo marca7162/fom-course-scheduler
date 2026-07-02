@@ -140,7 +140,10 @@ def import_teachers():
         create table if not exists teachers(
         tID integer primary key autoincrement,
         tName varchar (50) not null,
-        availableDays varchar(15) not null,
+        avM char(1) not null,
+        avT char(1) not null,
+        avW char(1) not null,
+        avTh char(1) not null,
         periods varchar (15) not null
         );
         """
@@ -148,13 +151,43 @@ def import_teachers():
     
     with open(TEACHERS_FILE, newline="", encoding="utf-8") as file:
         reader = csv.DictReader(file)
+        teachers = []
 
         for row in reader:
-            cursor.execute(
-                "insert into teachers (tName, availableDays, periods) values (?, ?, ?)",
-                (row["teacher_name"], row["day_group"], row["period_options"]),
-            )
-            print('inserted ' + row['teacher_name'])
+            if row["teacher_name"] not in teachers:
+                cursor.execute(
+                    "insert into teachers (tName, avM, avT, avW, avTh, periods) values (?, ?, ?, ?, ?, ?)",
+                    (row["teacher_name"], 0, 0, 0, 0, row["period_options"]),
+                )
+                teachers.append(row["teacher_name"])
+            tid = str(teachers.index(row['teacher_name']) + 1)
+            if 'M' in row["day_group"]:
+                cursor.execute(
+                    "update teachers set avM = 1 where tID = ?",(tid,))
+            if 'W' in row["day_group"]:
+                cursor.execute(
+                    "update teachers set avW = 1 where tID = ?",(tid,))
+            if 'TTH' in row["day_group"]:
+                cursor.execute(
+                    "update teachers set avT = 1, avTh = 1 where tID = ?",(tid,))
+            elif 'TH' in row["day_group"]:
+                cursor.execute(
+                    "update teachers set avTH = 1 where tID = ?",(tid,))
+            elif 'T' in row["day_group"]:
+                cursor.execute(
+                    "update teachers set avT = 1 where tID = ?",(tid,))
+
+        
+        # for row in reader:
+        #     print(row["day_group"])
+        #     if 'M' in row["day_group"]:
+        #         cursor.execute(
+        #             """update teachers
+        #                set avM = 1
+        #                where tID = ?
+        #             """,(teachers.index(row["teacher_name"]) + 1)
+        #         )
+                
     
     db.commit()
     db.close()
@@ -200,5 +233,5 @@ if __name__ == "__main__":
     # import_courses()
     # import_students()
     # import_tokenized_enrollment()
-    # import_teachers()
-    import_rooms()
+    import_teachers()
+    # import_rooms()
