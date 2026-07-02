@@ -143,8 +143,8 @@ def run_multiple_times(n: int):
             success += 1
         else:
             fail += 1
-        print(f"\n✅ Successful runs: {success}")
-        print(f"❌ Failed runs: {fail}")
+        print(f"\n Successful runs: {success}")
+        print(f" Failed runs: {fail}")
 if __name__ == "__main__":
     success = 0
     fail = 0
