@@ -1,6 +1,6 @@
 import sqlite3
 from pathlib import Path
-import pandas as pd
+#import pandas as pd
 
 PROJECT_ROOT = Path(__file__).resolve().parent.parent
 CSV_DIR = PROJECT_ROOT / "csv_files"
