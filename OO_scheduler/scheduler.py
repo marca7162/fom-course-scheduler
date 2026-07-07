@@ -82,33 +82,5 @@ def main():
 
     finally:
         conn.close()
-
-
-def run_multiple_times(n: int):
-    full_success = 0
-    relaxed_success = 0
-    room_fail = 0
-    hard_fail = 0
-
-    for i in range(n):
-        print(f"\n========== RUN {i + 1} / {n} ==========")
-        result = main()
-
-        if result == "full_success":
-            full_success += 1
-        elif result == "relaxed_success":
-            relaxed_success += 1
-        elif result == "room_fail":
-            room_fail += 1
-        else:
-            hard_fail += 1
-
-    print("\n========== RESULTS ==========")
-    print(f"Full constraint successes:     {full_success}")
-    print(f"Relaxed constraint successes:  {relaxed_success}")
-    print(f"Room assignment failures:      {room_fail}")
-    print(f"Hard failures:                 {hard_fail}")
-
-
 if __name__ == "__main__":
-    run_multiple_times(100)
+    main()
