@@ -1,17 +1,12 @@
+import 'react';
 function Teachers() {
-    return (
-        <div>
-            <div className="page-header">
+    return(<>
+            <div className="container mt-4" style={{ paddingTop: '80px' }}>
                 <h2>Teachers</h2>
-                <p className="text-muted">Teacher availability and teaching assignments will appear here.</p>
+                <p>Teacher availability list will be shown here.</p>
             </div>
-            <div className="card summary-card">
-                <div className="card-body">
-                    <p className="mb-0">This page is ready for the teacher-related schedule data.</p>
-                </div>
-            </div>
-        </div>
-    )
-}
 
+        </>
+
+);}
 export default Teachers
