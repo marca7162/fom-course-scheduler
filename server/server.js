@@ -6,6 +6,9 @@ import fs from 'fs';
 import csvParser from 'csv-parser';
 import { spawn } from 'child_process';
 
+let latestCandidates = [];
+let latestSelectedSchedule = [];
+
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
@@ -28,6 +31,39 @@ function sendCsv(res, filename) {
         .on('error', (err) => res.status(500).json({ error: err.message }));
 }
 
+function writeCsvFile(filePath, rows, headers) {
+    const lines = [headers.join(',')];
+    rows.forEach((row) => {
+        const values = headers.map((header) => {
+            const value = row[header] ?? '';
+            return String(value).replace(/"/g, '""');
+        });
+        lines.push(values.map((value) => `"${value}"`).join(','));
+    });
+    fs.writeFileSync(filePath, lines.join('\n'));
+}
+
+function writeSelectedSchedule(candidate) {
+    const courseRows = candidate.rows || [];
+    const teacherRows = [];
+    const studentRows = [];
+
+    courseRows.forEach((row) => {
+        teacherRows.push({
+            teacherName: 'Unknown',
+            day: row.day,
+            period: row.period,
+            courseCode: row.courseCode,
+            roomNumber: row.roomNumber,
+        });
+    });
+
+    writeCsvFile(path.join(outputDir, 'course_room_schedule.csv'), courseRows, ['courseCode', 'day', 'period', 'roomNumber']);
+    writeCsvFile(path.join(outputDir, 'teacher_schedule.csv'), teacherRows, ['teacherName', 'day', 'period', 'courseCode', 'roomNumber']);
+    writeCsvFile(path.join(outputDir, 'student_schedule.csv'), studentRows, ['studentId', 'courseCode', 'day', 'period', 'roomNumber']);
+    latestSelectedSchedule = courseRows;
+}
+
 app.get('/api/course-schedule', (req, res) => {
     sendCsv(res, 'course_room_schedule.csv');
 });
@@ -43,7 +79,7 @@ app.get('/api/teacher-schedule', (req, res) => {
 app.post('/api/run-scheduler', (req, res) => {
     const scriptPath = path.join(__dirname, '..', 'work', 'scripts', 'main.py');
     const py = process.env.PYTHON || 'python';
-    const proc = spawn(py, [scriptPath], { cwd: path.join(__dirname, '..'), stdio: ['ignore', 'pipe', 'pipe'] });
+    const proc = spawn(py, [scriptPath, '--json'], { cwd: path.join(__dirname, '..'), stdio: ['ignore', 'pipe', 'pipe'] });
 
     let stdout = '';
     let stderr = '';
@@ -52,11 +88,30 @@ app.post('/api/run-scheduler', (req, res) => {
 
     proc.on('close', (code) => {
         if (code === 0) {
-            return res.json({ ok: true, message: 'Scheduler completed', output: stdout });
+            try {
+                const parsed = JSON.parse(stdout);
+                latestCandidates = parsed.candidates || [];
+                latestSelectedSchedule = parsed.selectedSchedule || [];
+                writeSelectedSchedule(latestCandidates[0] || { rows: latestSelectedSchedule });
+                return res.json({ ok: true, message: 'Scheduler completed', ...parsed });
+            } catch (err) {
+                return res.status(500).json({ ok: false, error: `Invalid scheduler output: ${err.message}` });
+            }
         } else {
             return res.status(500).json({ ok: false, code, error: stderr || stdout });
         }
     });
+});
+
+app.post('/api/select-schedule', (req, res) => {
+    const { candidateId } = req.body || {};
+    const selected = latestCandidates.find((candidate) => candidate.id === candidateId);
+    if (!selected) {
+        return res.status(404).json({ error: 'Schedule candidate not found' });
+    }
+
+    writeSelectedSchedule(selected);
+    return res.json({ ok: true, candidateId, rows: selected.rows || [] });
 });
 
 const PORT = process.env.PORT || 5000;

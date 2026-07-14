@@ -8,6 +8,7 @@ function Teachers() {
     const [error, setError] = useState(null)
 
     useEffect(() => {
+        let mounted = true
         fetch('/api/teacher-schedule')
             .then((res) => {
                 if (!res.ok) {
@@ -35,13 +36,62 @@ function Teachers() {
                     })
                 })
 
-                setTeachers(byTeacher)
-                setLoading(false)
+                if (mounted) {
+                    setTeachers(byTeacher)
+                    setLoading(false)
+                }
             })
             .catch((err) => {
-                setError(err.message)
-                setLoading(false)
+                if (mounted) {
+                    setError(err.message)
+                    setLoading(false)
+                }
             })
+        const onChange = () => {
+            fetch('/api/teacher-schedule')
+                .then((res) => {
+                    if (!res.ok) throw new Error('Failed to load teacher schedule')
+                    return res.json()
+                })
+                .then((data) => {
+                    const byTeacher = data.reduce((acc, row) => {
+                        const name = row.teacherName || row.teacher_name || 'Unknown'
+                        acc[name] = acc[name] || []
+                        acc[name].push({
+                            day: row.day,
+                            period: row.period,
+                            courseCode: row.courseCode,
+                            roomNumber: row.roomNumber,
+                        })
+                        return acc
+                    }, {})
+
+                    Object.values(byTeacher).forEach((items) => {
+                        items.sort((a, b) => {
+                            if (a.day === b.day) return Number(a.period) - Number(b.period)
+                            return GROUP_ORDER.indexOf(a.day) - GROUP_ORDER.indexOf(b.day)
+                        })
+                    })
+
+                    if (mounted) {
+                        setTeachers(byTeacher)
+                        setLoading(false)
+                    }
+                })
+                .catch((err) => {
+                    if (mounted) {
+                        setError(err.message)
+                        setLoading(false)
+                    }
+                })
+        }
+
+        window.addEventListener('scheduleChanged', onChange)
+
+        return () => {
+            mounted = false
+            window.removeEventListener('scheduleChanged', onChange)
+        }
     }, [])
 
     if (loading) {

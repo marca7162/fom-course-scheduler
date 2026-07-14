@@ -1,81 +1,81 @@
 teacherName,day,period,courseCode,roomNumber
-Amanda Blanco,M,1,MADR 3604,Room 2
-Amanda Blanco,W,1,MADR 3604,Room 2
-Ana Sanmartín,M,7,MADR 4511W,Room 1
-Ana Sanmartín,W,7,MADR 4511W,Room 1
+Amanda Blanco,M,1,MADR 3604,Room 5
+Amanda Blanco,W,1,MADR 3604,Room 5
+Ana Sanmartín,M,7,MADR 4511W,Room 3
+Ana Sanmartín,W,7,MADR 4511W,Room 3
 Anas Abbood,M,3,MADR 3081W,Room 7
-Anas Abbood,M,6,MADR 4611,Room 3
+Anas Abbood,M,7,MADR 4611,Room 2
 Anas Abbood,T,3,MADR 3081W,Room 7
-Anas Abbood,T,6,MADR 4611,Room 3
+Anas Abbood,T,7,MADR 4611,Room 2
 Anas Abbood,TH,3,MADR 3081W,Room 7
-Anas Abbood,TH,6,MADR 4611,Room 3
+Anas Abbood,TH,7,MADR 4611,Room 2
 Anas Abbood,W,3,MADR 3081W,Room 7
-Anas Abbood,W,6,MADR 4611,Room 3
-Carlos Colón,M,1,MADR 3014,Room 1
-Carlos Colón,M,2,MADR 3012,Room 1
-Carlos Colón,T,1,MADR 3006,Room 4
-Carlos Colón,T,2,MADR 3012,Room 1
-Carlos Colón,TH,1,MADR 3006,Room 4
-Carlos Colón,TH,2,MADR 3012,Room 1
-Carlos Colón,W,1,MADR 3014,Room 1
-Carlos Colón,W,2,MADR 3012,Room 1
-Carmen Chacón,M,7,MADR 1002,Room 2
-Carmen Chacón,W,7,MADR 1002,Room 2
-David Sarias,TH,6,MADR 3019,Room 9
+Anas Abbood,W,7,MADR 4611,Room 2
+Carlos Colón,M,1,MADR 3012,Room 1
+Carlos Colón,M,2,MADR 3014,Room 1
+Carlos Colón,T,1,MADR 3012,Room 1
+Carlos Colón,T,2,MADR 3006,Room 4
+Carlos Colón,TH,1,MADR 3012,Room 1
+Carlos Colón,TH,2,MADR 3006,Room 4
+Carlos Colón,W,1,MADR 3012,Room 1
+Carlos Colón,W,2,MADR 3014,Room 1
+Carmen Chacón,M,7,MADR 1002,Room 4
+Carmen Chacón,W,7,MADR 1002,Room 4
+David Sarias,TH,7,MADR 3019,Room 6
 Diego González,M,3,MADR 4041,Room 6
 Diego González,T,3,MADR 4041,Room 6
 Diego González,TH,3,MADR 4041,Room 6
 Diego González,W,3,MADR 4041,Room 6
-Diego Pita,T,6,MADR 1004,Room 8
-Diego Pita,TH,6,MADR 1004,Room 8
+Diego Pita,T,4,MADR 1004,Room 5
+Diego Pita,TH,4,MADR 1004,Room 5
 Isabel Menéndez,M,3,MADR 3013,Room 3
-Isabel Menéndez,M,6,MADR 3026,Room 1
+Isabel Menéndez,M,7,MADR 3026,Room 1
 Isabel Menéndez,T,3,MADR 3013,Room 3
-Isabel Menéndez,T,6,MADR 3026,Room 1
+Isabel Menéndez,T,7,MADR 3026,Room 1
 Isabel Menéndez,TH,3,MADR 3013,Room 3
-Isabel Menéndez,TH,6,MADR 3026,Room 1
+Isabel Menéndez,TH,7,MADR 3026,Room 1
 Isabel Menéndez,W,3,MADR 3013,Room 3
-Isabel Menéndez,W,6,MADR 3026,Room 1
-Isabel Piera,T,1,MADR 3017,Room 2
-Isabel Piera,T,2,MADR 1003,Room 2
-Isabel Piera,TH,1,MADR 3017,Room 2
-Isabel Piera,TH,2,MADR 1003,Room 2
-Julian Taylor,T,6,MADR 4901,Room 6
-Julian Taylor,TH,6,MADR 4901,Room 6
+Isabel Menéndez,W,7,MADR 3026,Room 1
+Isabel Piera,T,1,MADR 3017,Room 6
+Isabel Piera,T,8,MADR 1003,Room 2
+Isabel Piera,TH,1,MADR 3017,Room 6
+Isabel Piera,TH,8,MADR 1003,Room 2
+Julian Taylor,T,4,MADR 4901,Room 2
+Julian Taylor,TH,4,MADR 4901,Room 2
 Ksenija Jovanovic,M,3,MADR 3023,Room 5
 Ksenija Jovanovic,T,3,MADR 3023,Room 5
-Ksenija Jovanovic,T,6,MADR 3018,Room 5
+Ksenija Jovanovic,T,4,MADR 3018,Room 4
 Ksenija Jovanovic,TH,3,MADR 3023,Room 5
-Ksenija Jovanovic,TH,6,MADR 3018,Room 5
+Ksenija Jovanovic,TH,4,MADR 3018,Room 4
 Ksenija Jovanovic,W,3,MADR 3023,Room 5
-Lola Romero,T,1,MADR 3024,Room 6
+Lola Romero,M,1,MADR 3024,Room 4
 Lola Romero,T,8,MADR 1001,Room 1
-Lola Romero,TH,1,MADR 3024,Room 6
 Lola Romero,TH,8,MADR 1001,Room 1
-Luis Toro,T,1,MADR 3001,Room 3
-Luis Toro,T,6,MADR 3008,Room 7
-Luis Toro,TH,1,MADR 3001,Room 3
-Luis Toro,TH,6,MADR 3008,Room 7
+Lola Romero,W,1,MADR 3024,Room 4
+Luis Toro,T,4,MADR 3001,Room 3
+Luis Toro,T,5,MADR 3008,Room 1
+Luis Toro,TH,4,MADR 3001,Room 3
+Luis Toro,TH,5,MADR 3008,Room 1
 Marta Gray,M,3,MADR 3031,Room 2
 Marta Gray,T,3,MADR 3031,Room 2
 Marta Gray,TH,3,MADR 3031,Room 2
 Marta Gray,W,3,MADR 3031,Room 2
+Marta López Beriso,M,1,MADR 3027,Room 2
 Marta López Beriso,M,3,MADR 3025,Room 1
-Marta López Beriso,M,6,MADR 3027,Room 2
+Marta López Beriso,T,1,MADR 3027,Room 2
 Marta López Beriso,T,3,MADR 3025,Room 1
-Marta López Beriso,T,5,MADR 3021,Room 1
-Marta López Beriso,T,6,MADR 3027,Room 2
+Marta López Beriso,TH,1,MADR 3027,Room 2
 Marta López Beriso,TH,3,MADR 3025,Room 1
-Marta López Beriso,TH,6,MADR 3027,Room 2
+Marta López Beriso,TH,7,MADR 3021,Room 4
+Marta López Beriso,W,1,MADR 3027,Room 2
 Marta López Beriso,W,3,MADR 3025,Room 1
-Marta López Beriso,W,6,MADR 3027,Room 2
 Miriam Mower,M,3,MADR 3206,Room 4
 Miriam Mower,T,3,MADR 3206,Room 4
 Miriam Mower,TH,3,MADR 3206,Room 4
 Miriam Mower,W,3,MADR 3206,Room 4
-Samar Khalife,T,1,MADR 3301,Room 1
-Samar Khalife,T,2,MADR 3711,Room 4
-Samar Khalife,TH,1,MADR 3301,Room 1
-Samar Khalife,TH,2,MADR 3711,Room 4
-Tania de la Fuente,T,6,MADR 3002,Room 4
-Tania de la Fuente,TH,6,MADR 3002,Room 4
+Samar Khalife,T,1,MADR 3301,Room 4
+Samar Khalife,T,2,MADR 3711,Room 1
+Samar Khalife,TH,1,MADR 3301,Room 4
+Samar Khalife,TH,2,MADR 3711,Room 1
+Tania de la Fuente,T,4,MADR 3002,Room 1
+Tania de la Fuente,TH,4,MADR 3002,Room 1

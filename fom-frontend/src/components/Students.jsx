@@ -6,6 +6,7 @@ function Students() {
     const [error, setError] = useState(null)
 
     useEffect(() => {
+        let mounted = true
         fetch('/api/student-schedule')
             .then((res) => {
                 if (!res.ok) {
@@ -45,13 +46,74 @@ function Students() {
                     })
                 })
 
-                setStudents(byStudent)
-                setLoading(false)
+                if (mounted) {
+                    setStudents(byStudent)
+                    setLoading(false)
+                }
             })
             .catch((err) => {
-                setError(err.message)
-                setLoading(false)
+                if (mounted) {
+                    setError(err.message)
+                    setLoading(false)
+                }
             })
+        const onChange = () => {
+            fetch('/api/student-schedule')
+                .then((res) => {
+                    if (!res.ok) throw new Error('Failed to load student schedule')
+                    return res.json()
+                })
+                .then((data) => {
+                    const byStudent = data.reduce((acc, row) => {
+                        const id = row.studentId || row.student_id || 'Unknown'
+                        acc[id] = acc[id] || []
+                        acc[id].push({
+                            courseCode: row.courseCode,
+                            day: row.day,
+                            period: row.period,
+                            roomNumber: row.roomNumber,
+                        })
+                        return acc
+                    }, {})
+
+                    Object.values(byStudent).forEach((items) => {
+                        const groupedBySlot = items.reduce((acc, item) => {
+                            const slotKey = `${item.day}|${item.period}`
+                            if (!acc[slotKey]) acc[slotKey] = []
+                            acc[slotKey].push(item)
+                            return acc
+                        }, {})
+
+                        items.forEach((item) => {
+                            const slotKey = `${item.day}|${item.period}`
+                            item.hasConflict = (groupedBySlot[slotKey]?.length || 0) > 1
+                        })
+
+                        items.sort((a, b) => {
+                            if (a.day === b.day) return Number(a.period) - Number(b.period)
+                            return a.day.localeCompare(b.day)
+                        })
+                    })
+
+                    if (mounted) {
+                        setStudents(byStudent)
+                        setLoading(false)
+                    }
+                })
+                .catch((err) => {
+                    if (mounted) {
+                        setError(err.message)
+                        setLoading(false)
+                    }
+                })
+        }
+
+        window.addEventListener('scheduleChanged', onChange)
+
+        return () => {
+            mounted = false
+            window.removeEventListener('scheduleChanged', onChange)
+        }
     }, [])
 
     if (loading) {

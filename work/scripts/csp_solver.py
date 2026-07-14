@@ -3,12 +3,18 @@ from typing import Dict, List, Optional, FrozenSet, Tuple, Set
 from .models import Course
 
 class CourseScheduler:
-    def __init__(self, courses: List[Course], ignore_all_student_conflicts: bool = False):
+    def __init__(
+        self,
+        courses: List[Course],
+        ignore_all_student_conflicts: bool = False,
+        order_key=None,
+    ):
         self.courses = courses
         self.course_dict = {c.code: c for c in courses}
         self.assignment = {}
         self.teacher_schedule = defaultdict(set)
         self.ignore_all_student_conflicts = ignore_all_student_conflicts
+        self.order_key = order_key or (lambda c: len(c.domain))
 
     @staticmethod
     def is_madr_course(code: str) -> bool:
@@ -86,8 +92,7 @@ class CourseScheduler:
         return False
 
     def solve(self) -> Optional[Dict[str, FrozenSet[Tuple[str, int]]]]:
-        # MRV ordering
-        self.courses.sort(key=lambda c: len(c.domain))
+        self.courses.sort(key=self.order_key)
         if self.backtrack(0):
             return self.assignment
         return None
