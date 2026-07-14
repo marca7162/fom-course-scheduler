@@ -4,7 +4,7 @@ function Schedule() {
             <div className="page-header">
                 <h1 className="display-6 fw-bold">FOM Schedule Overview</h1>
                 <p className="text-muted">
-                    A simple front-end shell for the generated course schedule.
+                    It is here.
                 </p>
             </div>
 
