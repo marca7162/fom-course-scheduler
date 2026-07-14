@@ -1,6 +1,5 @@
 from typing import Dict, List, FrozenSet, Tuple
 from .models import Course
-import itertools
 
 DAY_GROUPS = {
     "M": ("M",),
@@ -52,33 +51,11 @@ def build_domains(
 ) -> Dict[str, List[FrozenSet[Tuple[str, int]]]]:
     domains = {}
     for course, rows in avail_data.items():
-        has_room_pref = any(
-            row["preference"] in ("classroom", "museum") for row in rows
-        )
-        if has_room_pref:
-            # Combine rows via Cartesian product
-            row_options_list = []
-            for row in rows:
-                opts = generate_options_for_row(row)
-                if not opts:
-                    row_options_list = []
-                    break
-                row_options_list.append(opts)
-            if not row_options_list:
-                domains[course] = []
+        domain_set = set()
+        for row in rows:
+            opts = generate_options_for_row(row)
+            if not opts:
                 continue
-            domain_set = set()
-            for combo in itertools.product(*row_options_list):
-                merged = set()
-                for pat in combo:
-                    merged.update(pat)
-                domain_set.add(frozenset(merged))
-            domains[course] = list(domain_set)
-        else:
-            # Take union of options from all rows
-            domain_set = set()
-            for row in rows:
-                opts = generate_options_for_row(row)
-                domain_set.update(opts)
-            domains[course] = list(domain_set)
+            domain_set.update(opts)
+        domains[course] = list(domain_set)
     return domains

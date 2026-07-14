@@ -1,5 +1,4 @@
 import csv
-import itertools
 import sqlite3
 from collections import defaultdict
 from dataclasses import dataclass
@@ -71,26 +70,13 @@ DAY_GROUPS = {
 def build_domains(avail_data: Dict[str, List[Dict]]) -> Dict[str, List[FrozenSet[Tuple[str, int]]]]:
     domains = {}
     for course, rows in avail_data.items():
-        # Determine expected number of meetings (max across rows)
-        expected = 0
-        row_options_list = []
-
+        domain_set = set()
         for row in rows:
             day_group = row['day_group'].strip()
             days = DAY_GROUPS.get(day_group, (day_group,))
             periods = [int(p.strip()) for p in row['period_options'].split(',') if p.strip().isdigit()]
             pref = row['preference'].strip()
 
-            if pref in ('classroom', 'museum'):
-                expected = max(expected, len(days))
-            elif pref == 'two_in_row':
-                expected = max(expected, 2)
-            elif pref == 'once_per_week':
-                expected = max(expected, 1)
-            else:
-                expected = max(expected, len(days))
-
-            # Build options for this row
             options = []
             if pref == 'once_per_week':
                 for d in days:
@@ -106,16 +92,8 @@ def build_domains(avail_data: Dict[str, List[Dict]]) -> Dict[str, List[FrozenSet
             else:
                 for p in periods:
                     options.append(frozenset((d, p) for d in days))
-            row_options_list.append(options)
 
-        # Combine rows via Cartesian product
-        domain_set = set()
-        for combo in itertools.product(*row_options_list):
-            merged = set()
-            for pat in combo:
-                merged.update(pat)
-            if len(merged) == expected:
-                domain_set.add(frozenset(merged))
+            domain_set.update(options)
         domains[course] = list(domain_set)
     return domains
 

@@ -27,6 +27,18 @@ function Students() {
                 }, {})
 
                 Object.values(byStudent).forEach((items) => {
+                    const groupedBySlot = items.reduce((acc, item) => {
+                        const slotKey = `${item.day}|${item.period}`
+                        if (!acc[slotKey]) acc[slotKey] = []
+                        acc[slotKey].push(item)
+                        return acc
+                    }, {})
+
+                    items.forEach((item) => {
+                        const slotKey = `${item.day}|${item.period}`
+                        item.hasConflict = (groupedBySlot[slotKey]?.length || 0) > 1
+                    })
+
                     items.sort((a, b) => {
                         if (a.day === b.day) return Number(a.period) - Number(b.period)
                         return a.day.localeCompare(b.day)
@@ -64,7 +76,7 @@ function Students() {
                 <div className="col-12">
                     <h2>Students</h2>
                     <p className="text-muted">
-                        Student enrollment and their scheduled courses from the backend.
+                        Student enrollment and their scheduled courses from the backend. Conflicts are highlighted in red.
                     </p>
                 </div>
             </div>
@@ -88,8 +100,16 @@ function Students() {
                                         </thead>
                                         <tbody>
                                             {schedule.map((item, index) => (
-                                                <tr key={`${studentId}-${index}`}>
-                                                    <td>{item.courseCode}</td>
+                                                <tr
+                                                    key={`${studentId}-${index}`}
+                                                    className={item.hasConflict ? 'table-danger' : ''}
+                                                >
+                                                    <td>
+                                                        {item.courseCode}
+                                                        {item.hasConflict && (
+                                                            <span className="ms-2 badge bg-danger">Conflict</span>
+                                                        )}
+                                                    </td>
                                                     <td>{item.day}</td>
                                                     <td>{item.period}</td>
                                                     <td>{item.roomNumber}</td>

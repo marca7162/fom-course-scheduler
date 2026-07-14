@@ -71,13 +71,14 @@ function Schedule() {
     if (loading) return <div className="text-center mt-5">Loading schedule...</div>;
     if (error) return <div className="alert alert-danger">Error: {error}</div>;
 
-    // Build lookup
+    // Build lookup for day/period so we can show multiple courses if they overlap
     const lookup = {};
     scheduleData.forEach(row => {
         const day = row.day;
         const period = parseInt(row.period, 10);
         if (!lookup[day]) lookup[day] = {};
-        lookup[day][period] = { course: row.courseCode, room: row.roomNumber };
+        if (!lookup[day][period]) lookup[day][period] = [];
+        lookup[day][period].push({ course: row.courseCode, room: row.roomNumber });
     });
 
     const periods = [...new Set(scheduleData.map(r => parseInt(r.period, 10)))].sort((a, b) => a - b);
@@ -104,14 +105,30 @@ function Schedule() {
                         <tr key={day}>
                             <td className="fw-bold">{day}</td>
                             {periods.map(p => {
-                                const cell = lookup[day]?.[p];
+                                const cell = lookup[day]?.[p] || [];
+                                const roomGroups = cell.reduce((groups, entry) => {
+                                    if (!groups[entry.room]) groups[entry.room] = [];
+                                    groups[entry.room].push(entry);
+                                    return groups;
+                                }, {});
+                                const hasConflict = Object.values(roomGroups).some(group => group.length > 1);
                                 return (
                                     <td key={`${day}-${p}`}>
-                                        {cell ? (
-                                            <div className="card bg-light border-primary" style={{ padding: '8px' }}>
+                                        {cell.length > 0 ? (
+                                            <div
+                                                className={`card ${hasConflict ? 'border-danger' : 'border-primary'} ${hasConflict ? 'bg-danger-subtle' : 'bg-light'}`}
+                                                style={{ padding: '8px' }}
+                                            >
+                                                {hasConflict && (
+                                                    <div className="small text-danger fw-bold mb-1">Same-room conflict</div>
+                                                )}
                                                 <div className="card-body p-1">
-                                                    <h6 className="card-title mb-0">{cell.course}</h6>
-                                                    <p className="card-text mb-0 small">Room: {cell.room}</p>
+                                                    {cell.map((entry, index) => (
+                                                        <div key={`${entry.course}-${entry.room}-${index}`} className={index > 0 ? 'mt-2' : ''}>
+                                                            <h6 className="card-title mb-0">{entry.course}</h6>
+                                                            <p className="card-text mb-0 small">Room: {entry.room}</p>
+                                                        </div>
+                                                    ))}
                                                 </div>
                                             </div>
                                         ) : (
