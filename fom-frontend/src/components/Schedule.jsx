@@ -253,7 +253,7 @@ function Schedule() {
             {uploadMessage && <div className="alert alert-success">{uploadMessage}</div>}
             {error && <div className="alert alert-danger">{error}</div>}
             <div className="table-responsive">
-                <table className="table table-bordered text-center schedule-table">
+                <table className="table table-bordered text-center schedule-table style={{ tableLayout: 'fixed', minWidth: '900px' }}">
                     <thead>
                     <tr>
                         <th>Days</th>
@@ -278,31 +278,35 @@ function Schedule() {
                                     return groups;
                                 }, {});
                                 const hasConflict = Object.values(roomGroups).some(group => group.length > 1);
+                                
                                 return (
+                                    /* 1. REMOVED height: '1px' -- Let the cell resize organically */
                                     <td key={`${day}-${p}`} style={{ verticalAlign: 'top' }}>
                                         {cell.length > 0 ? (
-                                            /* 1. Flex container to hold our individual "sub-cells" side-by-side */
-                                            <div className="d-flex flex-column gap-2 h-100 align-items-stretch">
+                                            /* 2. REMOVED h-100 and align-items-stretch */
+                                            <div className="d-flex flex-column gap-2">
                                                 {cell.map((entry, index) => {
-                                                    
-                                                    /* 2. Check conflict per-entry: Does another class in this cell share this room? */
                                                     const isConflictingEntry = cell.some(
                                                         (other, otherIdx) => other.room === entry.room && otherIdx !== index
                                                     );
 
                                                     return (
-                                                        /* 3. Each class now gets its own independent, flexible card */
+                                                        /* 3. REMOVED flex-fill -- Let the card take its natural height */
                                                         <div
                                                             key={`${entry.course}-${entry.room}-${index}`}
-                                                            className={`card flex-fill course-block ${isConflictingEntry ? 'course-block-conflict' : ''}`}
+                                                            className={`card course-block ${isConflictingEntry ? 'course-block-conflict' : ''}`}
                                                             style={courseColors.get(entry.course)}
                                                         >
                                                             {isConflictingEntry && (
-                                                                <div className="small text-danger fw-bold mb-1">Room Conflict</div>
+                                                                <div className="small text-danger fw-bold p-2 pb-0">Room Conflict</div>
                                                             )}
-                                                            <div className="card-body p-1">
-                                                                <h6 className="card-title mb-0">{entry.course}</h6>
-                                                                <p className="card-text mb-0 small">Room: {entry.room}</p>
+                                                            <div className="card-body p-2">
+                                                                <h6 className="card-title mb-1 fw-bold" style={{ fontSize: '0.85rem' }}>
+                                                                    {entry.course}
+                                                                </h6>
+                                                                <p className="card-text mb-0 small text-muted">
+                                                                    Room: {entry.room}
+                                                                </p>
                                                             </div>
                                                         </div>
                                                     );
