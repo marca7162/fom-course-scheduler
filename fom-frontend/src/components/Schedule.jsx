@@ -16,6 +16,9 @@ const DAYS = ['M', 'T', 'W', 'TH', 'F'];
 
 function Schedule() {
     const [scheduleData, setScheduleData] = useState([]);
+    const [appliedScheduleData, setAppliedScheduleData] = useState([]);
+    const [scheduleCandidates, setScheduleCandidates] = useState([]);
+    const [selectedCandidateId, setSelectedCandidateId] = useState('');
     const [loading, setLoading] = useState(true);   // start as true
     const [error, setError] = useState(null);
     const [schedulerRunning, setSchedulerRunning] = useState(false);
@@ -47,16 +50,29 @@ function Schedule() {
         setSchedulerRunning(true);
         setSchedulerMessage('Running scheduler...');
         setError(null);
+        setLoading(true);
 
         fetch('/api/run-scheduler', { method: 'POST' })
             .then(res => {
                 if (!res.ok) throw new Error('Scheduler failed');
                 return res.json();
             })
-            .then(() => {
+            .then((data) => {
+                if (data?.selectedSchedule) {
+                    setScheduleData(data.selectedSchedule);
+                    setAppliedScheduleData(data.selectedSchedule);
+                }
+                if (data?.candidates) {
+                    // show at most three candidate schedules
+                    setScheduleCandidates(data.candidates.slice(0, 3));
+                    setSelectedCandidateId(data.selectedCandidateId || '');
+                    if (data.selectedCandidateId) {
+                        // persist server-selected candidate id
+                        try { localStorage.setItem('selectedScheduleId', data.selectedCandidateId); } catch (e) { }
+                    }
+                }
                 setSchedulerMessage('Scheduler completed successfully!');
-                // Refresh schedule – will set loading(false) when done
-                setLoading(true);   // optionally show loading again
+                // refresh the canonical schedule from server if available
                 fetchSchedule();
             })
             .catch(err => {
@@ -65,8 +81,66 @@ function Schedule() {
             })
             .finally(() => {
                 setSchedulerRunning(false);
+                setLoading(false);
             });
     };
+
+    // preview selection before applying as baseline
+    const [previewCandidateId, setPreviewCandidateId] = useState('');
+
+    const applyPreviewAsBaseline = () => {
+        if (!previewCandidateId) return;
+        chooseCandidate(previewCandidateId);
+    };
+
+    const chooseCandidate = (candidateId) => {
+        fetch('/api/select-schedule', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ candidateId }),
+        })
+            .then(res => {
+                if (!res.ok) throw new Error('Could not apply schedule choice');
+                return res.json();
+            })
+            .then((data) => {
+                setSelectedCandidateId(candidateId);
+                setScheduleData(data.rows || []);
+                setAppliedScheduleData(data.rows || []);
+                // persist selection for the rest of the app
+                try { localStorage.setItem('selectedScheduleId', candidateId); } catch (e) { }
+                // notify other parts of app
+                try { window.dispatchEvent(new CustomEvent('scheduleChanged', { detail: { selectedCandidateId: candidateId } })); } catch (e) { }
+                setSchedulerMessage('Selected schedule has been applied.');
+            })
+            .catch((err) => {
+                setError(err.message);
+            });
+    };
+
+    // initialize selected candidate from localStorage (apply on mount)
+    useEffect(() => {
+        try {
+            const saved = localStorage.getItem('selectedScheduleId');
+            if (saved) {
+                // attempt to apply saved selection from server
+                chooseCandidate(saved);
+            }
+        } catch (e) { }
+    }, []);
+
+    // when preview changes, show candidate rows but don't overwrite appliedScheduleData
+    useEffect(() => {
+        if (!previewCandidateId) {
+            // revert to applied schedule
+            setScheduleData(appliedScheduleData || []);
+            return;
+        }
+        const cand = scheduleCandidates.find(c => c.id === previewCandidateId);
+        if (cand) {
+            setScheduleData(cand.rows || []);
+        }
+    }, [previewCandidateId, scheduleCandidates, appliedScheduleData]);
 
     if (loading) return <div className="text-center mt-5">Loading schedule...</div>;
     if (error) return <div className="alert alert-danger">Error: {error}</div>;
@@ -142,6 +216,62 @@ function Schedule() {
                     </tbody>
                 </table>
             </div>
+            {scheduleCandidates.length > 0 && (
+                <div className="mt-4">
+                    <h4 className="h5">Schedule options</h4>
+                    <p className="text-muted small">Choose the option with the fewest conflicts to work with.</p>
+                    <div className="row gy-3">
+                        {scheduleCandidates.map((candidate) => {
+                            const isSelected = selectedCandidateId === candidate.id;
+                            return (
+                                <div className="col-md-4" key={candidate.id}>
+                                    <div className={`card h-100 ${isSelected ? 'border-primary shadow-sm' : 'border-light'}`}>
+                                        <div className="card-body">
+                                            <div className="form-check form-check-inline mb-2">
+                                                <input
+                                                    className="form-check-input"
+                                                    type="radio"
+                                                    name="candidatePreview"
+                                                    id={`preview-${candidate.id}`}
+                                                    checked={previewCandidateId === candidate.id}
+                                                    onChange={() => setPreviewCandidateId(candidate.id)}
+                                                />
+                                                <label className="form-check-label small" htmlFor={`preview-${candidate.id}`}>
+                                                    Preview this schedule
+                                                </label>
+                                            </div>
+                                            <h5 className="card-title">{candidate.name}</h5>
+                                            <p className="card-text mb-2">
+                                                <strong>{candidate.conflictCount}</strong> student conflicts
+                                            </p>
+                                            <p className="card-text small text-muted">
+                                                {candidate.rows.length} course meetings
+                                            </p>
+                                            <button
+                                                className={`btn btn-sm ${isSelected ? 'btn-primary' : 'btn-outline-primary'}`}
+                                                onClick={() => chooseCandidate(candidate.id)}
+                                            >
+                                                {isSelected ? 'Selected' : 'Use this schedule'}
+                                            </button>
+                                        </div>
+                                    </div>
+                                </div>
+                            );
+                        })}
+                    </div>
+                    {/** Apply preview as baseline button */}
+                    <div className="mt-3">
+                        <button
+                            className="btn btn-secondary btn-sm"
+                            onClick={applyPreviewAsBaseline}
+                            disabled={!previewCandidateId || previewCandidateId === selectedCandidateId}
+                        >
+                            Apply selected as baseline
+                        </button>
+                    </div>
+                </div>
+            )}
+
             <p className="text-muted small mt-2">Only periods with scheduled courses are shown.</p>
 
             <div className="text-center mt-4">

@@ -6,6 +6,7 @@ function Rooms() {
     const [error, setError] = useState(null)
 
     useEffect(() => {
+        let mounted = true;
         fetch('/api/course-schedule')
             .then((res) => {
                 if (!res.ok) {
@@ -32,13 +33,62 @@ function Rooms() {
                     })
                 })
 
-                setRooms(byRoom)
-                setLoading(false)
+                if (mounted) {
+                    setRooms(byRoom)
+                    setLoading(false)
+                }
             })
             .catch((err) => {
-                setError(err.message)
-                setLoading(false)
+                if (mounted) {
+                    setError(err.message)
+                    setLoading(false)
+                }
             })
+        const onChange = () => {
+            // re-fetch when schedule changes elsewhere
+            fetch('/api/course-schedule')
+                .then((res) => {
+                    if (!res.ok) throw new Error('Failed to load course schedule')
+                    return res.json()
+                })
+                .then((data) => {
+                    const byRoom = data.reduce((acc, row) => {
+                        const room = row.roomNumber || row.room_number || 'Unknown'
+                        acc[room] = acc[room] || []
+                        acc[room].push({
+                            courseCode: row.courseCode,
+                            day: row.day,
+                            period: row.period,
+                        })
+                        return acc
+                    }, {})
+
+                    Object.values(byRoom).forEach((items) => {
+                        items.sort((a, b) => {
+                            if (a.day === b.day) return Number(a.period) - Number(b.period)
+                            return a.day.localeCompare(b.day)
+                        })
+                    })
+
+                    if (mounted) {
+                        setRooms(byRoom)
+                        setLoading(false)
+                    }
+                })
+                .catch((err) => {
+                    if (mounted) {
+                        setError(err.message)
+                        setLoading(false)
+                    }
+                })
+        }
+
+        window.addEventListener('scheduleChanged', onChange)
+
+        return () => {
+            mounted = false
+            window.removeEventListener('scheduleChanged', onChange)
+        }
     }, [])
 
     if (loading) {

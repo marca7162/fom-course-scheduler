@@ -11,8 +11,6 @@ def read_rooms(csv_path: str) -> Dict[str, "Room"]:
     with open(csv_path, "r", encoding="utf-8-sig") as f:
         reader = csv.DictReader(f)
 
-        print("Room CSV headers:", reader.fieldnames)
-
         for row in reader:
             rooms[row["Room Number"]] = Room(
                 number=row["Room Number"],
