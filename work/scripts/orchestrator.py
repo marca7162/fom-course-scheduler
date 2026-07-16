@@ -10,6 +10,9 @@ from .room_assigner import assign_rooms_backtracking
 from .csv_exporter import write_course_room_schedule, write_teacher_schedule, write_student_schedule
 
 
+RANDOM_RETRY_LIMIT = 25
+
+
 def _build_course_rows(room_schedule: dict) -> list:
     rows = []
     for code, (pattern, room) in room_schedule.items():
@@ -104,6 +107,7 @@ def run_scheduler(
     ]
 
     candidates = []
+    seen_schedules = set()
     for name, ignore_conflicts, order_key in candidate_specs:
         scheduler = CourseScheduler(
             list(courses),
@@ -118,6 +122,10 @@ def run_scheduler(
             assignment, courses, rooms_data
         )
         rows = _build_course_rows(room_schedule)
+        signature = tuple(
+            sorted((row["courseCode"], row["day"], row["period"], row["roomNumber"]) for row in rows)
+        )
+        seen_schedules.add(signature)
         candidates.append(
             {
                 "id": name.lower().replace(" ", "-"),
@@ -128,10 +136,49 @@ def run_scheduler(
             }
         )
 
+    # If the strict solver cannot reach zero conflicts, retry randomized relaxed
+    # schedules and keep the best unique results. Both time choices and rooms are
+    # shuffled by their respective solvers on every attempt.
+    best_conflict_count = min(
+        (candidate["conflictCount"] for candidate in candidates),
+        default=float("inf"),
+    )
+    attempt = 1
+    while best_conflict_count > 0 and attempt <= RANDOM_RETRY_LIMIT:
+        scheduler = CourseScheduler(
+            list(courses),
+            ignore_all_student_conflicts=True,
+            order_key=lambda c: (len(c.domain), len(c.students)),
+        )
+        assignment = scheduler.solve()
+        if assignment is None:
+            break
+
+        room_schedule = assign_rooms_backtracking(assignment, courses, rooms_data)
+        rows = _build_course_rows(room_schedule)
+        signature = tuple(
+            sorted((row["courseCode"], row["day"], row["period"], row["roomNumber"]) for row in rows)
+        )
+        if signature not in seen_schedules:
+            seen_schedules.add(signature)
+            conflict_count = _count_conflicts(room_schedule, enroll_data)
+            candidates.append(
+                {
+                    "id": f"random-{attempt}",
+                    "name": f"Random attempt {attempt}",
+                    "conflictCount": conflict_count,
+                    "rows": rows,
+                    "roomSchedule": room_schedule,
+                }
+            )
+            best_conflict_count = min(best_conflict_count, conflict_count)
+        attempt += 1
+
     if not candidates:
         raise RuntimeError("No feasible schedule could be generated.")
 
     candidates.sort(key=lambda item: (item["conflictCount"], item["name"]))
+    candidates = candidates[:3]
     best_candidate = candidates[0]
     room_schedule = best_candidate["roomSchedule"]
 

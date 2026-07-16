@@ -98,12 +98,20 @@ function Schedule() {
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ candidateId }),
         })
-            .then(res => {
-                if (!res.ok) throw new Error('Could not apply schedule choice');
+            .then(async res => {
+                if (!res.ok) {
+                    if (res.status === 404) {
+                        try { localStorage.removeItem('selectedScheduleId'); } catch (e) { }
+                        throw new Error('That saved schedule is no longer available. Run the scheduler again.');
+                    }
+                    const body = await res.json().catch(() => ({}));
+                    throw new Error(body.error || 'Could not apply schedule choice');
+                }
                 return res.json();
             })
             .then((data) => {
                 setSelectedCandidateId(candidateId);
+                setPreviewCandidateId(candidateId);
                 setScheduleData(data.rows || []);
                 setAppliedScheduleData(data.rows || []);
                 // persist selection for the rest of the app
@@ -235,10 +243,13 @@ function Schedule() {
                                                     name="candidatePreview"
                                                     id={`preview-${candidate.id}`}
                                                     checked={previewCandidateId === candidate.id}
-                                                    onChange={() => setPreviewCandidateId(candidate.id)}
+                                                    onChange={() => {
+                                                        setPreviewCandidateId(candidate.id);
+                                                        chooseCandidate(candidate.id);
+                                                    }}
                                                 />
                                                 <label className="form-check-label small" htmlFor={`preview-${candidate.id}`}>
-                                                    Preview this schedule
+                                                    Choose this schedule
                                                 </label>
                                             </div>
                                             <h5 className="card-title">{candidate.name}</h5>
