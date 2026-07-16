@@ -19,6 +19,33 @@ app.use(express.json());
 const outputDir = path.join(__dirname, '..', 'work', 'output');
 const csvDir = path.join(__dirname, '..', 'work', 'csv_files');
 const candidatesFile = path.join(outputDir, 'schedule_candidates.json');
+const uploadDir = path.join(__dirname, '..', 'work', 'uploads');
+const bundledPython = path.join(__dirname, '..', '.venv', 'Scripts', 'python.exe');
+
+function pythonExecutable() {
+    if (process.env.PYTHON) return process.env.PYTHON;
+    if (fs.existsSync(bundledPython)) return bundledPython;
+    return 'python';
+}
+
+function runPython(scriptPath, args = []) {
+    return new Promise((resolve, reject) => {
+        const py = pythonExecutable();
+        const proc = spawn(py, [scriptPath, ...args], {
+            cwd: path.join(__dirname, '..'),
+            stdio: ['ignore', 'pipe', 'pipe'],
+        });
+        let stdout = '';
+        let stderr = '';
+        proc.stdout.on('data', (data) => { stdout += data.toString(); });
+        proc.stderr.on('data', (data) => { stderr += data.toString(); });
+        proc.on('error', reject);
+        proc.on('close', (code) => {
+            if (code === 0) resolve(stdout);
+            else reject(new Error(stderr.trim() || stdout.trim() || `Python exited with code ${code}`));
+        });
+    });
+}
 
 function loadSavedCandidates() {
     try {
@@ -130,9 +157,56 @@ app.get('/api/teacher-schedule', (req, res) => {
     sendCsv(res, 'teacher_schedule.csv');
 });
 
+app.post(
+    '/api/upload-workbook',
+    express.raw({ type: 'application/octet-stream', limit: '25mb' }),
+    async (req, res) => {
+        const originalName = decodeURIComponent(req.get('x-file-name') || 'schedule.xlsx');
+        if (!originalName.toLowerCase().endsWith('.xlsx')) {
+            return res.status(400).json({ ok: false, error: 'Please upload an .xlsx Excel workbook.' });
+        }
+        if (!Buffer.isBuffer(req.body) || req.body.length === 0) {
+            return res.status(400).json({ ok: false, error: 'The uploaded workbook is empty.' });
+        }
+        // XLSX files are ZIP containers and begin with the PK signature.
+        if (req.body[0] !== 0x50 || req.body[1] !== 0x4b) {
+            return res.status(400).json({ ok: false, error: 'This file is not a valid .xlsx workbook.' });
+        }
+
+        fs.mkdirSync(uploadDir, { recursive: true });
+        const safeName = `${Date.now()}-${path.basename(originalName).replace(/[^a-zA-Z0-9._-]/g, '_')}`;
+        const uploadPath = path.join(uploadDir, safeName);
+        fs.writeFileSync(uploadPath, req.body);
+
+        try {
+            const scriptPath = path.join(__dirname, '..', 'work', 'scripts', 'import_and_schedule.py');
+            const stdout = await runPython(scriptPath, [uploadPath]);
+            const jsonStart = stdout.indexOf('{"course_room"');
+            const parsed = JSON.parse(jsonStart >= 0 ? stdout.slice(jsonStart) : stdout);
+            latestCandidates = parsed.candidates || [];
+            latestSelectedSchedule = parsed.selectedSchedule || [];
+            saveCandidates(latestCandidates);
+            await writeSelectedSchedule(latestCandidates[0] || { rows: latestSelectedSchedule });
+            return res.json({
+                ok: true,
+                message: 'Workbook imported and schedules generated.',
+                fileName: originalName,
+                ...parsed,
+            });
+        } catch (err) {
+            return res.status(422).json({
+                ok: false,
+                error: `Could not process workbook: ${err.message}`,
+            });
+        } finally {
+            fs.rmSync(uploadPath, { force: true });
+        }
+    }
+);
+
 app.post('/api/run-scheduler', (req, res) => {
     const scriptPath = path.join(__dirname, '..', 'work', 'scripts', 'main.py');
-    const py = process.env.PYTHON || 'python';
+    const py = pythonExecutable();
     const proc = spawn(py, [scriptPath, '--json'], { cwd: path.join(__dirname, '..'), stdio: ['ignore', 'pipe', 'pipe'] });
 
     let stdout = '';

@@ -14,6 +14,9 @@ const PERIOD_TIMES = {
 const DAYS = ['M', 'T', 'W', 'TH'];
 
 function Schedule() {
+    const [workbook, setWorkbook] = useState(null);
+    const [uploading, setUploading] = useState(false);
+    const [uploadMessage, setUploadMessage] = useState('');
     const [scheduleData, setScheduleData] = useState([]);
     const [appliedScheduleData, setAppliedScheduleData] = useState([]);
     const [scheduleCandidates, setScheduleCandidates] = useState([]);
@@ -84,6 +87,43 @@ function Schedule() {
             });
     };
 
+    const uploadWorkbook = async (event) => {
+        event.preventDefault();
+        if (!workbook || uploading) return;
+        setUploading(true);
+        setError(null);
+        setUploadMessage('Uploading workbook and building schedule data...');
+
+        try {
+            const response = await fetch('/api/upload-workbook', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/octet-stream',
+                    'X-File-Name': encodeURIComponent(workbook.name),
+                },
+                body: workbook,
+            });
+            const data = await response.json().catch(() => ({}));
+            if (!response.ok) throw new Error(data.error || 'Workbook processing failed.');
+
+            setScheduleData(data.selectedSchedule || []);
+            setAppliedScheduleData(data.selectedSchedule || []);
+            setScheduleCandidates((data.candidates || []).slice(0, 3));
+            setSelectedCandidateId(data.selectedCandidateId || '');
+            setPreviewCandidateId(data.selectedCandidateId || '');
+            if (data.selectedCandidateId) {
+                localStorage.setItem('selectedScheduleId', data.selectedCandidateId);
+            }
+            setUploadMessage(`${workbook.name} is ready. Choose a schedule below.`);
+        } catch (err) {
+            setError(err.message);
+            setUploadMessage('');
+        } finally {
+            setUploading(false);
+            setLoading(false);
+        }
+    };
+
     // preview selection before applying as baseline
     const [previewCandidateId, setPreviewCandidateId] = useState('');
 
@@ -149,8 +189,7 @@ function Schedule() {
         }
     }, [previewCandidateId, scheduleCandidates, appliedScheduleData]);
 
-    if (loading) return <div className="text-center mt-5">Loading schedule...</div>;
-    if (error) return <div className="alert alert-danger">Error: {error}</div>;
+    if (loading && !uploading) return <div className="text-center mt-5">Loading schedule...</div>;
 
     // Build lookup for day/period so we can show multiple courses if they overlap
     const lookup = {};
@@ -181,7 +220,38 @@ function Schedule() {
 
     return (
         <div className="container-fluid mt-4" style={{ paddingTop: '80px' }}>
+            {uploading && (
+                <div className="processing-overlay" role="status" aria-live="polite">
+                    <div className="processing-card text-center">
+                        <div className="spinner-border text-primary mb-3" aria-hidden="true" />
+                        <h3 className="h5">Setting up your schedule</h3>
+                        <p className="text-muted mb-0">Reading the workbook, preparing course data, and finding schedule options.</p>
+                    </div>
+                </div>
+            )}
             <h2 className="mb-3">Course Schedule</h2>
+            <form className="upload-panel mb-4" onSubmit={uploadWorkbook}>
+                <div>
+                    <h3 className="h5 mb-1">Import schedule workbook</h3>
+                    <p className="text-muted small mb-3">Upload the enrollment workbook in Excel (.xlsx) format. It must include Final Enrollment, Class Periods, and Teacher Availability sheets.</p>
+                    <input
+                        className="form-control"
+                        type="file"
+                        accept=".xlsx,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+                        onChange={(event) => {
+                            setWorkbook(event.target.files?.[0] || null);
+                            setError(null);
+                            setUploadMessage('');
+                        }}
+                        disabled={uploading}
+                    />
+                </div>
+                <button className="btn btn-primary upload-button" type="submit" disabled={!workbook || uploading}>
+                    {uploading ? 'Processing...' : 'Upload & build schedules'}
+                </button>
+            </form>
+            {uploadMessage && <div className="alert alert-success">{uploadMessage}</div>}
+            {error && <div className="alert alert-danger">{error}</div>}
             <div className="table-responsive">
                 <table className="table table-bordered text-center schedule-table">
                     <thead>

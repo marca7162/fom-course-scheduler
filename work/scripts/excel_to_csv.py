@@ -1,3 +1,4 @@
+import argparse
 from pathlib import Path
 import pandas as pd
 
@@ -8,7 +9,7 @@ CSV_DIR = PROJECT_ROOT / "csv_files"
 
 
 
-INPUT_FILE = PROJECT_ROOT / "Sample Enrollement Record.xlsx"
+INPUT_FILE = PROJECT_ROOT.parent / "Sample Enrollement Record.xlsx"
 
 OUTPUT_ENROLLMENT = CSV_DIR / "clean_enrollment.csv"
 OUTPUT_PERIODS = CSV_DIR / "clean_periods.csv"
@@ -16,8 +17,8 @@ OUTPUT_AVAILABILITY = CSV_DIR / "clean_availability.csv"
 OUTPUT_COUNTS = CSV_DIR / "clean_counts.csv"
 
 
-def clean_enrollment():
-    df = pd.read_excel(INPUT_FILE, sheet_name="Final Enrollment", header=1)
+def clean_enrollment(input_file=INPUT_FILE):
+    df = pd.read_excel(input_file, sheet_name="Final Enrollment", header=1)
 
     df = df[
         [
@@ -43,8 +44,8 @@ def clean_enrollment():
     df.to_csv(OUTPUT_ENROLLMENT, index=False)
 
 
-def clean_counts():
-    df = pd.read_excel(INPUT_FILE, sheet_name="Final Enrollment", header=1)
+def clean_counts(input_file=INPUT_FILE):
+    df = pd.read_excel(input_file, sheet_name="Final Enrollment", header=1)
 
     df = df[["Full Course List", "Credits"]].copy()
 
@@ -63,8 +64,8 @@ def clean_counts():
     df.to_csv(OUTPUT_COUNTS, index=False)
 
 
-def clean_periods():
-    df = pd.read_excel(INPUT_FILE, sheet_name="Class Periods", header=None)
+def clean_periods(input_file=INPUT_FILE):
+    df = pd.read_excel(input_file, sheet_name="Class Periods", header=None)
 
     clean_df = df.iloc[1:, 0:5].copy()
 
@@ -79,9 +80,9 @@ def clean_periods():
     clean_df.to_csv(OUTPUT_PERIODS, index=False)
 
 
-def clean_availability():
+def clean_availability(input_file=INPUT_FILE):
     df = pd.read_excel(
-        INPUT_FILE, sheet_name="Teacher Availability", header=None
+        input_file, sheet_name="Teacher Availability", header=None
     )
 
     clean_df = df.iloc[:, 0:5].copy()
@@ -115,13 +116,13 @@ def clean_availability():
     clean_df.to_csv(OUTPUT_AVAILABILITY, index=False)
 
 
-def main():
+def convert_excel(input_file=INPUT_FILE):
     CSV_DIR.mkdir(exist_ok=True)
 
-    clean_enrollment()
-    clean_counts()
-    clean_periods()
-    clean_availability()
+    clean_enrollment(input_file)
+    clean_counts(input_file)
+    clean_periods(input_file)
+    clean_availability(input_file)
 
     print("Created:")
     print(OUTPUT_ENROLLMENT)
@@ -131,4 +132,7 @@ def main():
 
 
 if __name__ == "__main__":
-    main()
+    parser = argparse.ArgumentParser()
+    parser.add_argument("input_file", nargs="?", default=str(INPUT_FILE))
+    args = parser.parse_args()
+    convert_excel(Path(args.input_file))

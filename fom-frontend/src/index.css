@@ -68,3 +68,48 @@ main {
 .course-block-conflict {
   box-shadow: 0 0 0 3px #dc3545, 0 2px 5px rgba(15, 23, 42, 0.12);
 }
+
+.upload-panel {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 1.25rem;
+  align-items: end;
+  padding: 1.5rem;
+  border: 1px solid #dbe4ff;
+  border-radius: 1rem;
+  background: rgba(255, 255, 255, 0.92);
+  box-shadow: 0 0.4rem 1.2rem rgba(15, 23, 42, 0.08);
+}
+
+.upload-button {
+  white-space: nowrap;
+}
+
+.processing-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 2000;
+  display: grid;
+  place-items: center;
+  padding: 1rem;
+  background: rgba(15, 23, 42, 0.55);
+  backdrop-filter: blur(4px);
+}
+
+.processing-card {
+  width: min(440px, 100%);
+  padding: 2rem;
+  border-radius: 1.25rem;
+  background: #fff;
+  box-shadow: 0 1.5rem 4rem rgba(15, 23, 42, 0.25);
+}
+
+@media (max-width: 767px) {
+  .upload-panel {
+    grid-template-columns: 1fr;
+  }
+
+  .upload-button {
+    width: 100%;
+  }
+}
