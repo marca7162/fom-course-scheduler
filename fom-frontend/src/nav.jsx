@@ -1,12 +1,20 @@
-import { NavLink } from 'react-router-dom'
+import { NavLink } from 'react-router-dom';
+import logo from './assets/fom-logo-full.png';
 
 function Nav() {
     return (
         <nav className="navbar navbar-expand-lg navbar-light bg-light shadow-sm">
             <div className="container">
-                <NavLink className="navbar-brand fw-bold" to="/">
-                    FOM Schedule
+                <NavLink className="navbar-brand fw-bold d-flex align-items-center" to="/">
+                    FOM Schedule 
+                    <img 
+                    src={logo} 
+                    alt="FOM Logo" 
+                    height="36" 
+                    className="me-2 d-inline-block align-text-top" 
+                    />
                 </NavLink>
+                
                 <button
                     className="navbar-toggler"
                     type="button"
