@@ -1,4 +1,5 @@
 import csv
+import random
 import sqlite3
 from collections import defaultdict
 from dataclasses import dataclass
@@ -25,6 +26,7 @@ class Course:
     domain: List[FrozenSet[Tuple[str, int]]]
     preference: str
     room_preference: Optional[str] = None   # 'classroom' or 'museum'
+    needs_extra_time: bool = False
 
 @dataclass
 class Room:
@@ -64,7 +66,7 @@ def read_availability(csv_path: Path) -> Dict[str, List[Dict]]:
 # ---------- Domain Builder ----------
 DAY_GROUPS = {
     'M': ('M',), 'T': ('T',), 'W': ('W',), 'TH': ('TH',), 'F': ('F',),
-    'MW': ('M','W'), 'TTH': ('T','TH'), 'TH': ('TH',), 'ALL': ('M','T','W','TH','F'),
+    'MW': ('M','W'), 'TTH': ('T','TH'), 'TH': ('TH',),
 }
 
 def build_domains(avail_data: Dict[str, List[Dict]]) -> Dict[str, List[FrozenSet[Tuple[str, int]]]]:
@@ -74,11 +76,16 @@ def build_domains(avail_data: Dict[str, List[Dict]]) -> Dict[str, List[FrozenSet
         for row in rows:
             day_group = row['day_group'].strip()
             days = DAY_GROUPS.get(day_group, (day_group,))
-            periods = [int(p.strip()) for p in row['period_options'].split(',') if p.strip().isdigit()]
+            periods = [
+                int(p.strip()) for p in row['period_options'].split(',')
+                if p.strip().isdigit() and p.strip() != '8'
+            ]
             pref = row['preference'].strip()
 
             options = []
             if pref == 'once_per_week':
+                if day_group == 'ALL':
+                    days = ('M', 'T', 'W', 'TH')
                 for d in days:
                     for p in periods:
                         options.append(frozenset([(d, p)]))
@@ -90,8 +97,10 @@ def build_domains(avail_data: Dict[str, List[Dict]]) -> Dict[str, List[FrozenSet
                         if p2 == p1 + 1:
                             options.append(frozenset([(d, p1), (d, p2)]))
             else:
-                for p in periods:
-                    options.append(frozenset((d, p) for d in days))
+                day_patterns = (('M', 'W'), ('T', 'TH')) if day_group == 'ALL' else (days,)
+                for day_pattern in day_patterns:
+                    for p in periods:
+                        options.append(frozenset((d, p) for d in day_pattern))
 
             domain_set.update(options)
         domains[course] = list(domain_set)
@@ -105,12 +114,20 @@ class CourseScheduler:
         self.assignment = {}
         self.teacher_schedule = defaultdict(set)
 
+    @staticmethod
+    def occupied_slots(course: Course, pattern: FrozenSet[Tuple[str, int]]) -> Set[Tuple[str, int]]:
+        slots = set(pattern)
+        if course.needs_extra_time:
+            slots.update((day, period + 1) for day, period in pattern)
+        return slots
+
     def is_consistent(self, code: str, pattern: FrozenSet[Tuple[str, int]]) -> bool:
         course = self.course_dict[code]
         teacher = course.teacher
+        occupied = self.occupied_slots(course, pattern)
 
         # Teacher conflict
-        for slot in pattern:
+        for slot in occupied:
             if slot in self.teacher_schedule[teacher]:
                 return False
 
@@ -118,40 +135,41 @@ class CourseScheduler:
         for other_code, other_pattern in self.assignment.items():
             other_course = self.course_dict[other_code]
             if course.students & other_course.students:
-                if pattern & other_pattern:
+                if occupied & self.occupied_slots(other_course, other_pattern):
                     return False
         return True
 
     def assign(self, code: str, pattern: FrozenSet[Tuple[str, int]]) -> None:
         self.assignment[code] = pattern
         teacher = self.course_dict[code].teacher
-        for slot in pattern:
+        for slot in self.occupied_slots(self.course_dict[code], pattern):
             self.teacher_schedule[teacher].add(slot)
 
     def unassign(self, code: str) -> None:
         pattern = self.assignment.pop(code)
         teacher = self.course_dict[code].teacher
-        for slot in pattern:
+        for slot in self.occupied_slots(self.course_dict[code], pattern):
             self.teacher_schedule[teacher].remove(slot)
 
     def count_forward_conflicts(self, code: str, pattern: FrozenSet[Tuple[str, int]]) -> int:
         conflicts = 0
         course = self.course_dict[code]
+        occupied = self.occupied_slots(course, pattern)
         for other in self.courses:
             if other.code == code or other.code in self.assignment:
                 continue
             # Teacher overlap potential
             if other.teacher == course.teacher:
-                for slot in pattern:
+                for slot in occupied:
                     for dom in other.domain:
-                        if slot in dom:
+                        if slot in self.occupied_slots(other, dom):
                             conflicts += 1
                             break
             # Student overlap potential
             if course.students & other.students:
-                for slot in pattern:
+                for slot in occupied:
                     for dom in other.domain:
-                        if slot in dom:
+                        if slot in self.occupied_slots(other, dom):
                             conflicts += 1
                             break
         return conflicts
@@ -163,8 +181,12 @@ class CourseScheduler:
         code = course.code
 
         # Sort domain by forward‑checking heuristic
+        # Pick randomly between equally good values from period_options while
+        # preserving all values as fallbacks if the first choice conflicts.
+        domain_options = list(course.domain)
+        random.shuffle(domain_options)
         domain_sorted = sorted(
-            course.domain,
+            domain_options,
             key=lambda pat: self.count_forward_conflicts(code, pat)
         )
 
@@ -192,18 +214,23 @@ def assign_rooms(
     time_rooms = defaultdict(set)
     room_schedule = {}
     sorted_courses = sorted(courses, key=lambda c: len(c.students), reverse=True)
+    room_list = list(rooms.values())
 
     for course in sorted_courses:
         code = course.code
         pattern = schedule[code]
+        occupied_pattern = set(pattern)
+        if course.needs_extra_time:
+            occupied_pattern.update((day, period + 1) for day, period in pattern)
         needed = len(course.students)
 
         chosen = None
-        for room in rooms.values():
+        random.shuffle(room_list)
+        for room in room_list:
             if room.capacity < needed:
                 continue
             free = True
-            for slot in pattern:
+            for slot in occupied_pattern:
                 if slot in time_rooms and room.number in time_rooms[slot]:
                     free = False
                     break
@@ -214,7 +241,7 @@ def assign_rooms(
         if chosen is None:
             raise RuntimeError(f"No room available for {code} (needs {needed} students)")
 
-        for slot in pattern:
+        for slot in occupied_pattern:
             time_rooms[slot].add(chosen)
         room_schedule[code] = (pattern, chosen)
     return room_schedule
@@ -247,6 +274,10 @@ def main():
         pref = first_row['preference']
         # Detect room preference if any row says 'classroom' or 'museum'
         room_pref = None
+        needs_extra_time = any(
+            '8' in {value.strip() for value in row['period_options'].split(',')}
+            for row in avail[code]
+        )
         for row in avail[code]:
             if row['preference'] in ('classroom', 'museum'):
                 room_pref = row['preference']
@@ -256,7 +287,8 @@ def main():
             students=enrollment.get(code, set()),
             domain=domain,
             preference=pref,
-            room_preference=room_pref
+            room_preference=room_pref,
+            needs_extra_time=needs_extra_time
         ))
 
     if not courses:

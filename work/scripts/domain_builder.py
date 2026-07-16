@@ -9,7 +9,6 @@ DAY_GROUPS = {
     "MW": ("M", "W"),
     "TTH": ("T", "TH"),
     "TH": ("TH",),
-    "ALL": ("M", "T", "W", "TH"),
 }
 
 
@@ -19,7 +18,7 @@ def generate_options_for_row(row: Dict) -> List[FrozenSet[Tuple[str, int]]]:
     periods = [
         int(p.strip())
         for p in row["period_options"].split(",")
-        if p.strip().isdigit()
+        if p.strip().isdigit() and p.strip() != "8"
     ]
     pref = row["preference"].strip()
     weekly = (
@@ -30,6 +29,8 @@ def generate_options_for_row(row: Dict) -> List[FrozenSet[Tuple[str, int]]]:
 
     options = []
     if pref == "once_per_week" or weekly == 1:
+        if day_group == "ALL":
+            days = ("M", "T", "W", "TH")
         for d in days:
             for p in periods:
                 options.append(frozenset([(d, p)]))
@@ -41,8 +42,12 @@ def generate_options_for_row(row: Dict) -> List[FrozenSet[Tuple[str, int]]]:
                 if p2 == p1 + 1:
                     options.append(frozenset([(d, p1), (d, p2)]))
     else:
-        for p in periods:
-            options.append(frozenset((d, p) for d in days))
+        # ALL means the teacher can take either standard twice-weekly group;
+        # it must not turn into a four-day-per-week class.
+        day_patterns = (("M", "W"), ("T", "TH")) if day_group == "ALL" else (days,)
+        for day_pattern in day_patterns:
+            for p in periods:
+                options.append(frozenset((d, p) for d in day_pattern))
     return options
 
 

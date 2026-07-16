@@ -59,6 +59,13 @@ def build_course_objects(
         pref = first_row["preference"].strip()
         weekly_str = first_row.get("weekly_meeting", "").strip()
         weekly = int(weekly_str) if weekly_str else None
+        needs_extra_time = any(
+            "8" in {
+                value.strip()
+                for value in row.get("period_options", "").split(",")
+            }
+            for row in avail_data[code]
+        )
         room_pref = None
         for row in avail_data[code]:
             if row["preference"] in ("classroom", "museum"):
@@ -73,6 +80,7 @@ def build_course_objects(
                 preference=pref,
                 weekly_meeting=weekly,
                 room_preference=room_pref,
+                needs_extra_time=needs_extra_time,
             )
         )
     return courses

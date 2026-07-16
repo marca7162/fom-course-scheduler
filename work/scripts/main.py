@@ -2,7 +2,6 @@ import argparse
 import json
 import sys
 from pathlib import Path
-import glob
 
 sys.path.append(str(Path(__file__).parent.parent))
 
@@ -15,19 +14,17 @@ if __name__ == "__main__":
 
     project_root = Path(__file__).parent.parent
 
-    avail_pattern = str(project_root / "csv_files" / "tokenized_availability*.csv")
-    avail_files = glob.glob(avail_pattern)
-    if not avail_files:
+    avail_path = project_root / "csv_files" / "tokenized_availability.csv"
+    if not avail_path.exists():
         raise FileNotFoundError("No availability CSV found in csv_files/")
-    avail_path = avail_files[0]
 
     result = run_scheduler(
         rooms_path=str(project_root / "csv_files" / "rooms.csv"),
         enroll_path=str(
             project_root / "csv_files" / "tokenized_enrollment.csv"
         ),
-        avail_path=avail_path,
-        output_dir=str(project_root / "work" / "output"),
+        avail_path=str(avail_path),
+        output_dir=str(project_root / "output"),
     )
 
     if args.json:

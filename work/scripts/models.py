@@ -36,3 +36,4 @@ class Course:
     preference: str
     weekly_meeting: Optional[int] = None
     room_preference: Optional[str] = None
+    needs_extra_time: bool = False  # period 8 marker: reserve the next period
