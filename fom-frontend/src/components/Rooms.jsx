@@ -1,5 +1,42 @@
 import { useEffect, useState } from 'react'
 
+const DAY_ORDER = ['M', 'T', 'W', 'TH', 'F']
+
+function formatDayGroup(days) {
+    const uniqueDays = [...new Set(days)]
+    if (uniqueDays.length === 2 && uniqueDays.includes('M') && uniqueDays.includes('W')) return 'MW'
+    if (uniqueDays.length === 2 && uniqueDays.includes('T') && uniqueDays.includes('TH')) return 'TTH'
+    return uniqueDays.sort((a, b) => DAY_ORDER.indexOf(a) - DAY_ORDER.indexOf(b)).join('/')
+}
+
+function buildRoomSchedules(data) {
+    const byRoom = data.reduce((acc, row) => {
+        const room = row.roomNumber || row.room_number || 'Unknown'
+        acc[room] = acc[room] || []
+        const key = `${row.courseCode}|${row.period}`
+        let meeting = acc[room].find((item) => item.key === key)
+        if (!meeting) {
+            meeting = { key, days: [], courseCode: row.courseCode, period: row.period }
+            acc[room].push(meeting)
+        }
+        meeting.days.push(row.day)
+        return acc
+    }, {})
+
+    Object.values(byRoom).forEach((items) => {
+        items.forEach((item) => {
+            item.day = formatDayGroup(item.days)
+            delete item.days
+            delete item.key
+        })
+        items.sort((a, b) => {
+            const dayDifference = DAY_ORDER.indexOf(a.day[0]) - DAY_ORDER.indexOf(b.day[0])
+            return dayDifference || Number(a.period) - Number(b.period)
+        })
+    })
+    return byRoom
+}
+
 function Rooms() {
     const [rooms, setRooms] = useState({})
     const [loading, setLoading] = useState(true)
@@ -15,23 +52,7 @@ function Rooms() {
                 return res.json()
             })
             .then((data) => {
-                const byRoom = data.reduce((acc, row) => {
-                    const room = row.roomNumber || row.room_number || 'Unknown'
-                    acc[room] = acc[room] || []
-                    acc[room].push({
-                        courseCode: row.courseCode,
-                        day: row.day,
-                        period: row.period,
-                    })
-                    return acc
-                }, {})
-
-                Object.values(byRoom).forEach((items) => {
-                    items.sort((a, b) => {
-                        if (a.day === b.day) return Number(a.period) - Number(b.period)
-                        return a.day.localeCompare(b.day)
-                    })
-                })
+                const byRoom = buildRoomSchedules(data)
 
                 if (mounted) {
                     setRooms(byRoom)
@@ -52,23 +73,7 @@ function Rooms() {
                     return res.json()
                 })
                 .then((data) => {
-                    const byRoom = data.reduce((acc, row) => {
-                        const room = row.roomNumber || row.room_number || 'Unknown'
-                        acc[room] = acc[room] || []
-                        acc[room].push({
-                            courseCode: row.courseCode,
-                            day: row.day,
-                            period: row.period,
-                        })
-                        return acc
-                    }, {})
-
-                    Object.values(byRoom).forEach((items) => {
-                        items.sort((a, b) => {
-                            if (a.day === b.day) return Number(a.period) - Number(b.period)
-                            return a.day.localeCompare(b.day)
-                        })
-                    })
+                    const byRoom = buildRoomSchedules(data)
 
                     if (mounted) {
                         setRooms(byRoom)

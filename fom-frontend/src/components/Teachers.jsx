@@ -2,6 +2,41 @@ import { useEffect, useState } from 'react'
 
 const GROUP_ORDER = ['M', 'T', 'W', 'TH', 'F']
 
+function formatDayGroup(days) {
+    const uniqueDays = [...new Set(days)]
+    if (uniqueDays.length === 2 && uniqueDays.includes('M') && uniqueDays.includes('W')) return 'MW'
+    if (uniqueDays.length === 2 && uniqueDays.includes('T') && uniqueDays.includes('TH')) return 'TTH'
+    return uniqueDays.sort((a, b) => GROUP_ORDER.indexOf(a) - GROUP_ORDER.indexOf(b)).join('/')
+}
+
+function buildTeacherSchedules(data) {
+    const byTeacher = data.reduce((acc, row) => {
+        const name = row.teacherName || row.teacher_name || 'Unknown'
+        acc[name] = acc[name] || []
+        const key = `${row.courseCode}|${row.period}|${row.roomNumber}`
+        let assignment = acc[name].find((item) => item.key === key)
+        if (!assignment) {
+            assignment = { key, days: [], period: row.period, courseCode: row.courseCode, roomNumber: row.roomNumber }
+            acc[name].push(assignment)
+        }
+        assignment.days.push(row.day)
+        return acc
+    }, {})
+
+    Object.values(byTeacher).forEach((items) => {
+        items.forEach((item) => {
+            item.day = formatDayGroup(item.days)
+            delete item.days
+            delete item.key
+        })
+        items.sort((a, b) => {
+            const dayDifference = GROUP_ORDER.indexOf(a.day[0]) - GROUP_ORDER.indexOf(b.day[0])
+            return dayDifference || Number(a.period) - Number(b.period)
+        })
+    })
+    return byTeacher
+}
+
 function Teachers() {
     const [teachers, setTeachers] = useState({})
     const [loading, setLoading] = useState(true)
@@ -17,24 +52,7 @@ function Teachers() {
                 return res.json()
             })
             .then((data) => {
-                const byTeacher = data.reduce((acc, row) => {
-                    const name = row.teacherName || row.teacher_name || 'Unknown'
-                    acc[name] = acc[name] || []
-                    acc[name].push({
-                        day: row.day,
-                        period: row.period,
-                        courseCode: row.courseCode,
-                        roomNumber: row.roomNumber,
-                    })
-                    return acc
-                }, {})
-
-                Object.values(byTeacher).forEach((items) => {
-                    items.sort((a, b) => {
-                        if (a.day === b.day) return Number(a.period) - Number(b.period)
-                        return GROUP_ORDER.indexOf(a.day) - GROUP_ORDER.indexOf(b.day)
-                    })
-                })
+                const byTeacher = buildTeacherSchedules(data)
 
                 if (mounted) {
                     setTeachers(byTeacher)
@@ -54,24 +72,7 @@ function Teachers() {
                     return res.json()
                 })
                 .then((data) => {
-                    const byTeacher = data.reduce((acc, row) => {
-                        const name = row.teacherName || row.teacher_name || 'Unknown'
-                        acc[name] = acc[name] || []
-                        acc[name].push({
-                            day: row.day,
-                            period: row.period,
-                            courseCode: row.courseCode,
-                            roomNumber: row.roomNumber,
-                        })
-                        return acc
-                    }, {})
-
-                    Object.values(byTeacher).forEach((items) => {
-                        items.sort((a, b) => {
-                            if (a.day === b.day) return Number(a.period) - Number(b.period)
-                            return GROUP_ORDER.indexOf(a.day) - GROUP_ORDER.indexOf(b.day)
-                        })
-                    })
+                    const byTeacher = buildTeacherSchedules(data)
 
                     if (mounted) {
                         setTeachers(byTeacher)

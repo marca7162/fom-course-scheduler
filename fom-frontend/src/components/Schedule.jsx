@@ -166,11 +166,24 @@ function Schedule() {
         ...new Set(scheduleData.map(r => parseInt(r.period, 10)))
     ].sort((a, b) => a - b).filter(p => p !== 8);
 
+    const courseColors = new Map(
+        [...new Set(scheduleData.map(row => row.courseCode))]
+            .sort()
+            .map((courseCode, index) => {
+                const hue = Math.round((index * 137.508) % 360);
+                return [courseCode, {
+                    backgroundColor: `hsl(${hue} 72% 90%)`,
+                    borderColor: `hsl(${hue} 58% 48%)`,
+                    color: `hsl(${hue} 45% 20%)`,
+                }];
+            })
+    );
+
     return (
         <div className="container-fluid mt-4" style={{ paddingTop: '80px' }}>
             <h2 className="mb-3">Course Schedule</h2>
             <div className="table-responsive">
-                <table className="table table-bordered table-striped text-center">
+                <table className="table table-bordered text-center schedule-table">
                     <thead>
                     <tr>
                         <th>Days</th>
@@ -211,8 +224,8 @@ function Schedule() {
                                                         /* 3. Each class now gets its own independent, flexible card */
                                                         <div
                                                             key={`${entry.course}-${entry.room}-${index}`}
-                                                            className={`card flex-fill ${isConflictingEntry ? 'border-danger bg-danger-subtle' : 'border-primary bg-light'}`}
-                                                            style={{ padding: '8px', minWidth: '120px' }}
+                                                            className={`card flex-fill course-block ${isConflictingEntry ? 'course-block-conflict' : ''}`}
+                                                            style={courseColors.get(entry.course)}
                                                         >
                                                             {isConflictingEntry && (
                                                                 <div className="small text-danger fw-bold mb-1">Room Conflict</div>

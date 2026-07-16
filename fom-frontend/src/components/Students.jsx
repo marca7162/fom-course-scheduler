@@ -1,5 +1,56 @@
 import { useEffect, useState } from 'react'
 
+const DAY_ORDER = ['M', 'T', 'W', 'TH', 'F']
+
+function formatDayGroup(days) {
+    const uniqueDays = [...new Set(days)]
+    if (uniqueDays.length === 2 && uniqueDays.includes('M') && uniqueDays.includes('W')) return 'MW'
+    if (uniqueDays.length === 2 && uniqueDays.includes('T') && uniqueDays.includes('TH')) return 'TTH'
+    return uniqueDays.sort((a, b) => DAY_ORDER.indexOf(a) - DAY_ORDER.indexOf(b)).join('/')
+}
+
+function buildStudentSchedules(data) {
+    const byStudent = data.reduce((acc, row) => {
+        const id = row.studentId || row.student_id || 'Unknown'
+        acc[id] = acc[id] || []
+        acc[id].push({
+            courseCode: row.courseCode,
+            day: row.day,
+            period: row.period,
+            roomNumber: row.roomNumber,
+        })
+        return acc
+    }, {})
+
+    Object.entries(byStudent).forEach(([studentId, items]) => {
+        const slotCounts = items.reduce((counts, item) => {
+            const key = `${item.day}|${item.period}`
+            counts[key] = (counts[key] || 0) + 1
+            return counts
+        }, {})
+        const groupedCourses = new Map()
+
+        items.forEach((item) => {
+            const key = `${item.courseCode}|${item.period}|${item.roomNumber}`
+            if (!groupedCourses.has(key)) {
+                groupedCourses.set(key, { ...item, days: [], hasConflict: false })
+            }
+            const grouped = groupedCourses.get(key)
+            grouped.days.push(item.day)
+            grouped.hasConflict ||= slotCounts[`${item.day}|${item.period}`] > 1
+        })
+
+        byStudent[studentId] = [...groupedCourses.values()]
+            .map(({ days, ...item }) => ({ ...item, day: formatDayGroup(days) }))
+            .sort((a, b) => {
+                const dayDifference = DAY_ORDER.indexOf(a.day[0]) - DAY_ORDER.indexOf(b.day[0])
+                return dayDifference || Number(a.period) - Number(b.period)
+            })
+    })
+
+    return byStudent
+}
+
 function Students() {
     const [students, setStudents] = useState({})
     const [loading, setLoading] = useState(true)
@@ -15,36 +66,7 @@ function Students() {
                 return res.json()
             })
             .then((data) => {
-                const byStudent = data.reduce((acc, row) => {
-                    const id = row.studentId || row.student_id || 'Unknown'
-                    acc[id] = acc[id] || []
-                    acc[id].push({
-                        courseCode: row.courseCode,
-                        day: row.day,
-                        period: row.period,
-                        roomNumber: row.roomNumber,
-                    })
-                    return acc
-                }, {})
-
-                Object.values(byStudent).forEach((items) => {
-                    const groupedBySlot = items.reduce((acc, item) => {
-                        const slotKey = `${item.day}|${item.period}`
-                        if (!acc[slotKey]) acc[slotKey] = []
-                        acc[slotKey].push(item)
-                        return acc
-                    }, {})
-
-                    items.forEach((item) => {
-                        const slotKey = `${item.day}|${item.period}`
-                        item.hasConflict = (groupedBySlot[slotKey]?.length || 0) > 1
-                    })
-
-                    items.sort((a, b) => {
-                        if (a.day === b.day) return Number(a.period) - Number(b.period)
-                        return a.day.localeCompare(b.day)
-                    })
-                })
+                const byStudent = buildStudentSchedules(data)
 
                 if (mounted) {
                     setStudents(byStudent)
@@ -64,36 +86,7 @@ function Students() {
                     return res.json()
                 })
                 .then((data) => {
-                    const byStudent = data.reduce((acc, row) => {
-                        const id = row.studentId || row.student_id || 'Unknown'
-                        acc[id] = acc[id] || []
-                        acc[id].push({
-                            courseCode: row.courseCode,
-                            day: row.day,
-                            period: row.period,
-                            roomNumber: row.roomNumber,
-                        })
-                        return acc
-                    }, {})
-
-                    Object.values(byStudent).forEach((items) => {
-                        const groupedBySlot = items.reduce((acc, item) => {
-                            const slotKey = `${item.day}|${item.period}`
-                            if (!acc[slotKey]) acc[slotKey] = []
-                            acc[slotKey].push(item)
-                            return acc
-                        }, {})
-
-                        items.forEach((item) => {
-                            const slotKey = `${item.day}|${item.period}`
-                            item.hasConflict = (groupedBySlot[slotKey]?.length || 0) > 1
-                        })
-
-                        items.sort((a, b) => {
-                            if (a.day === b.day) return Number(a.period) - Number(b.period)
-                            return a.day.localeCompare(b.day)
-                        })
-                    })
+                    const byStudent = buildStudentSchedules(data)
 
                     if (mounted) {
                         setStudents(byStudent)
