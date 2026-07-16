@@ -11,7 +11,7 @@ const PERIOD_TIMES = {
     7: '18:30 – 19:50',
 };
 
-const DAYS = ['M', 'T', 'W', 'TH', 'F'];
+const DAYS = ['M', 'T', 'W', 'TH'];
 
 function Schedule() {
     const [scheduleData, setScheduleData] = useState([]);
@@ -188,23 +188,34 @@ function Schedule() {
                                 }, {});
                                 const hasConflict = Object.values(roomGroups).some(group => group.length > 1);
                                 return (
-                                    <td key={`${day}-${p}`}>
+                                    <td key={`${day}-${p}`} style={{ verticalAlign: 'top' }}>
                                         {cell.length > 0 ? (
-                                            <div
-                                                className={`card ${hasConflict ? 'border-danger' : 'border-primary'} ${hasConflict ? 'bg-danger-subtle' : 'bg-light'}`}
-                                                style={{ padding: '8px' }}
-                                            >
-                                                {hasConflict && (
-                                                    <div className="small text-danger fw-bold mb-1">Same-room conflict</div>
-                                                )}
-                                                <div className="card-body p-1">
-                                                    {cell.map((entry, index) => (
-                                                        <div key={`${entry.course}-${entry.room}-${index}`} className={index > 0 ? 'mt-2' : ''}>
-                                                            <h6 className="card-title mb-0">{entry.course}</h6>
-                                                            <p className="card-text mb-0 small">Room: {entry.room}</p>
+                                            /* 1. Flex container to hold our individual "sub-cells" side-by-side */
+                                            <div className="d-flex flex-column gap-2 h-100 align-items-stretch">
+                                                {cell.map((entry, index) => {
+                                                    
+                                                    /* 2. Check conflict per-entry: Does another class in this cell share this room? */
+                                                    const isConflictingEntry = cell.some(
+                                                        (other, otherIdx) => other.room === entry.room && otherIdx !== index
+                                                    );
+
+                                                    return (
+                                                        /* 3. Each class now gets its own independent, flexible card */
+                                                        <div
+                                                            key={`${entry.course}-${entry.room}-${index}`}
+                                                            className={`card flex-fill ${isConflictingEntry ? 'border-danger bg-danger-subtle' : 'border-primary bg-light'}`}
+                                                            style={{ padding: '8px', minWidth: '120px' }}
+                                                        >
+                                                            {isConflictingEntry && (
+                                                                <div className="small text-danger fw-bold mb-1">Room Conflict</div>
+                                                            )}
+                                                            <div className="card-body p-1">
+                                                                <h6 className="card-title mb-0">{entry.course}</h6>
+                                                                <p className="card-text mb-0 small">Room: {entry.room}</p>
+                                                            </div>
                                                         </div>
-                                                    ))}
-                                                </div>
+                                                    );
+                                                })}
                                             </div>
                                         ) : (
                                             <span className="text-muted">—</span>
