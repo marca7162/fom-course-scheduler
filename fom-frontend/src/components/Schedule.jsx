@@ -9,7 +9,6 @@ const PERIOD_TIMES = {
     5: '15:30 – 16:50',
     6: '17:00 – 18:20',
     7: '18:30 – 19:50',
-    8: '20:00 – 21:20',
 };
 
 const DAYS = ['M', 'T', 'W', 'TH', 'F'];
@@ -155,7 +154,9 @@ function Schedule() {
         lookup[day][period].push({ course: row.courseCode, room: row.roomNumber });
     });
 
-    const periods = [...new Set(scheduleData.map(r => parseInt(r.period, 10)))].sort((a, b) => a - b);
+    const periods = [
+        ...new Set(scheduleData.map(r => parseInt(r.period, 10)))
+    ].sort((a, b) => a - b).filter(p => p !== 8);
 
     return (
         <div className="container-fluid mt-4" style={{ paddingTop: '80px' }}>
